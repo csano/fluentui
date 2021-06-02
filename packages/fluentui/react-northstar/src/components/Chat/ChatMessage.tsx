@@ -4,6 +4,7 @@ import {
   chatMessageBehavior,
   menuAsToolbarBehavior,
   ChatMessageBehaviorProps,
+  keyboardKey,
 } from '@fluentui/accessibility';
 import {
   ComponentWithAs,
@@ -13,8 +14,9 @@ import {
   useFluentContext,
   useStyles,
   useTelemetry,
+  useContextSelector,
+  useAutoControlled,
 } from '@fluentui/react-bindings';
-import { useContextSelector } from '@fluentui/react-context-selector';
 import { Ref } from '@fluentui/react-component-ref';
 import * as customPropTypes from '@fluentui/react-proptypes';
 import cx from 'classnames';
@@ -24,10 +26,11 @@ import * as React from 'react';
 
 import {
   getScrollParent,
-  Popper,
-  PopperShorthandProps,
   partitionPopperPropsFromShorthand,
-  PopperModifiers,
+  PopperModifiersFn,
+  PopperRefHandle,
+  PopperShorthandProps,
+  usePopper,
 } from '../../utils/positioner';
 import {
   childrenExist,
@@ -38,8 +41,16 @@ import {
   commonPropTypes,
   rtlTextContainer,
   createShorthand,
+  getOrGenerateIdFromShorthand,
 } from '../../utils';
-import { ShorthandValue, ComponentEventHandler, ShorthandCollection, FluentComponentStaticProps } from '../../types';
+import {
+  ShorthandValue,
+  ComponentEventHandler,
+  ShorthandCollection,
+  FluentComponentStaticProps,
+  ObjectShorthandValue,
+  ComponentKeyboardEventHandler,
+} from '../../types';
 import { Box, BoxProps } from '../Box/Box';
 import { Label, LabelProps } from '../Label/Label';
 import { Menu, MenuProps } from '../Menu/Menu';
@@ -50,6 +61,8 @@ import { ReactionGroupProps } from '../Reaction/ReactionGroup';
 import { ChatItemContext } from './chatItemContext';
 import { ChatMessageHeader, ChatMessageHeaderProps } from './ChatMessageHeader';
 import { ChatMessageDetails, ChatMessageDetailsProps } from './ChatMessageDetails';
+import { ChatMessageReadStatus, ChatMessageReadStatusProps } from './ChatMessageReadStatus';
+import { PortalInner } from '../Portal/PortalInner';
 
 export interface ChatMessageSlotClassNames {
   actionMenu: string;
@@ -58,6 +71,7 @@ export interface ChatMessageSlotClassNames {
   badge: string;
   content: string;
   reactionGroup: string;
+  bar: string;
 }
 
 export interface ChatMessageProps
@@ -67,8 +81,15 @@ export interface ChatMessageProps
   /** Accessibility behavior if overridden by the user. */
   accessibility?: Accessibility<ChatMessageBehaviorProps>;
 
-  /** Menu with actions of the message. */
-  actionMenu?: ShorthandValue<MenuProps & { popper?: PopperShorthandProps }> | ShorthandCollection<MenuItemProps>;
+  /**
+   * Menu with actions of the message.
+   * popper: alters the action menu positioning.
+   * inline: whether the action menu should be rendered inline with the chat message, or in the body. It's true by default.
+   * showActionMenu: controls if the action menu is visible or not.
+   */
+  actionMenu?:
+    | ShorthandValue<MenuProps & { popper?: PopperShorthandProps; inline?: boolean; showActionMenu?: boolean }>
+    | ShorthandCollection<MenuItemProps & { inline?: boolean; showActionMenu?: boolean }>;
 
   /** Controls messages's relation to other chat messages. Is automatically set by the ChatItem. */
   attached?: boolean | 'top' | 'bottom';
@@ -87,6 +108,9 @@ export interface ChatMessageProps
 
   /** Message details info slot for the header. */
   details?: ShorthandValue<ChatMessageDetailsProps>;
+
+  /** Message read status indicator */
+  readStatus?: ShorthandValue<ChatMessageReadStatusProps>;
 
   /** Badge attached to the message. */
   badge?: ShorthandValue<LabelProps>;
@@ -115,6 +139,13 @@ export interface ChatMessageProps
    */
   onMouseEnter?: ComponentEventHandler<ChatMessageProps>;
 
+  /**
+   * Called after user leaves by mouse.
+   * @param event - React's original SyntheticEvent.
+   * @param data - All props.
+   */
+  onMouseLeave?: ComponentEventHandler<ChatMessageProps>;
+
   /** Allows suppression of action menu positioning for performance reasons */
   positionActionMenu?: boolean;
 
@@ -126,12 +157,23 @@ export interface ChatMessageProps
 
   /** Positions an actionMenu slot in "fixed" mode. */
   unstable_overflow?: boolean;
+
+  /**
+   * Called on chat message item key down.
+   * @param event - React's original SyntheticEvent.
+   * @param data - All props and proposed value.
+   */
+  onKeyDown?: ComponentKeyboardEventHandler<ChatMessageProps>;
 }
 
 export type ChatMessageStylesProps = Pick<ChatMessageProps, 'attached' | 'badgePosition' | 'mine'> & {
-  focused: boolean;
   hasBadge: boolean;
   hasReactionGroup: boolean;
+
+  // focused, hasActionMenu and showActionMenu controls the visibility of action menu
+  focused: boolean;
+  hasActionMenu: boolean;
+  showActionMenu: boolean;
 };
 
 export const chatMessageClassName = 'ui-chat__message';
@@ -142,7 +184,23 @@ export const chatMessageSlotClassNames: ChatMessageSlotClassNames = {
   badge: `${chatMessageClassName}__badge`,
   content: `${chatMessageClassName}__content`,
   reactionGroup: `${chatMessageClassName}__reactions`,
+  bar: `${chatMessageClassName}__bar`,
 };
+
+function partitionActionMenuPropsFromShorthand<P>(
+  value: ShorthandValue<P & { inline?: boolean; showActionMenu?: boolean }>,
+): [ShorthandValue<P> | ObjectShorthandValue<P>, boolean | undefined, boolean | undefined] {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const { inline, showActionMenu, ...props } = value as ObjectShorthandValue<P> & {
+      inline?: boolean;
+      showActionMenu?: boolean;
+    };
+
+    return [props as ObjectShorthandValue<P>, inline ?? true, showActionMenu];
+  }
+
+  return [value, true, false];
+}
 
 /**
  * A ChatMessage represents a single message in chat.
@@ -173,14 +231,55 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
     variables,
     header,
     details,
+    readStatus,
     unstable_overflow: overflow,
   } = props;
-  const [actionMenu, positioningProps] = partitionPopperPropsFromShorthand(props.actionMenu);
 
+  const [actionMenuOptions, positioningProps] = partitionPopperPropsFromShorthand(props.actionMenu);
+  const [actionMenu, inlineActionMenu, controlledShowActionMenu] = partitionActionMenuPropsFromShorthand(
+    actionMenuOptions,
+  );
+  const [showActionMenu, setShowActionMenu] = useAutoControlled<boolean>({
+    defaultValue: false,
+    value: controlledShowActionMenu,
+  });
+  const hasActionMenu = !_.isNil(actionMenu);
+
+  const actionMenuId = React.useRef<string>();
+  actionMenuId.current = getOrGenerateIdFromShorthand(`${chatMessageClassName}-`, actionMenu, actionMenuId.current);
+
+  const modifiers = React.useCallback<PopperModifiersFn>(
+    (target, container) => {
+      return (
+        positionActionMenu && [
+          // https://popper.js.org/docs/v2/modifiers/flip/
+          // Forces to flip only in "top-*" positions
+          { name: 'flip', options: { fallbackPlacements: ['top'] } },
+          overflow && {
+            name: 'preventOverflow',
+            options: { boundary: getScrollParent(container) },
+          },
+        ]
+      );
+    },
+    [positionActionMenu, overflow],
+  );
+
+  const popperRef = React.useRef<PopperRefHandle>();
+  const { targetRef: messageRef, containerRef: actionsMenuRef } = usePopper({
+    align: 'end',
+    position: 'above',
+    positionFixed: overflow,
+
+    enabled: hasActionMenu && positionActionMenu,
+    modifiers,
+    popperRef,
+
+    ...positioningProps,
+  });
+
+  // `focused` state is used for show/hide actionMenu
   const [focused, setFocused] = React.useState<boolean>(false);
-  const [messageNode, setMessageNode] = React.useState<HTMLElement | null>(null);
-
-  const updateActionsMenuPosition = React.useRef<(() => void) | null>(null);
 
   const getA11Props = useAccessibility(accessibility, {
     actionHandlers: {
@@ -194,13 +293,21 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
       },
 
       focus: event => {
-        if (messageNode) {
-          messageNode.focus();
+        if (messageRef.current) {
+          messageRef.current.focus();
           event.stopPropagation();
         }
       },
     },
+    debugName: ChatMessage.displayName,
+    mapPropsToBehavior: () => ({
+      hasActionMenu,
+      inlineActionMenu,
+      actionMenuId: actionMenuId.current,
+    }),
+    rtl: context.rtl,
   });
+
   const { classes, styles: resolvedStyles } = useStyles<ChatMessageStylesProps>(ChatMessage.displayName, {
     className: chatMessageClassName,
     mapPropsToStyles: () => ({
@@ -210,6 +317,8 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
       mine,
       hasBadge: !!badge,
       hasReactionGroup: !!reactionGroup,
+      hasActionMenu,
+      showActionMenu,
     }),
     mapPropsToInlineStyles: () => ({
       className,
@@ -221,8 +330,10 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
   });
 
   const handleFocus = (e: React.SyntheticEvent) => {
-    _.invoke(updateActionsMenuPosition, 'current');
+    popperRef.current?.updatePosition();
 
+    // react onFocus is called even when nested component receives focus (i.e. it bubbles)
+    // so when focus moves within actionMenu, the `focus` state in chatMessage remains true, and keeps actionMenu visible
     setFocused(true);
     _.invoke(props, 'onFocus', e, props);
   };
@@ -233,12 +344,24 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
     const shouldPreserveFocusState = _.invoke(e, 'currentTarget.contains', (e as any).relatedTarget);
 
     setFocused(shouldPreserveFocusState);
+    setShowActionMenu(false);
+
     _.invoke(props, 'onBlur', e, props);
   };
 
   const handleMouseEnter = (e: React.SyntheticEvent) => {
-    _.invoke(updateActionsMenuPosition, 'current');
+    popperRef.current?.updatePosition();
+    if (hasActionMenu && !inlineActionMenu) {
+      setShowActionMenu(true);
+    }
     _.invoke(props, 'onMouseEnter', e, props);
+  };
+
+  const handleMouseLeave = (e: React.SyntheticEvent) => {
+    if (!focused && hasActionMenu && !inlineActionMenu) {
+      setShowActionMenu(false);
+    }
+    _.invoke(props, 'onMouseLeave', e, props);
   };
 
   const renderActionMenu = () => {
@@ -249,39 +372,62 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
         className: chatMessageSlotClassNames.actionMenu,
         styles: resolvedStyles.actionMenu,
       }),
+      overrideProps: {
+        id: actionMenuId.current,
+      },
     });
 
-    if (!actionMenuElement) {
-      return actionMenuElement;
+    const content = actionMenuElement ? <Ref innerRef={actionsMenuRef}>{actionMenuElement}</Ref> : actionMenuElement;
+
+    return inlineActionMenu || !content ? content : <PortalInner>{content}</PortalInner>;
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (hasActionMenu && !inlineActionMenu) {
+      // reference: https://github.com/microsoft/fluentui/pull/17329
+
+      const toFocusItemInActionMenu =
+        actionsMenuRef.current?.querySelector('[tabindex="0"]') ??
+        actionsMenuRef.current?.querySelectorAll('[tabindex="-1"]:not([data-is-focusable="false"])')[0];
+
+      if (e.keyCode === keyboardKey.Enter) {
+        toFocusItemInActionMenu?.focus();
+        e.stopPropagation();
+        e.preventDefault();
+      }
+
+      if (e.keyCode === keyboardKey.Tab) {
+        // TAB/SHIFT+TAB cycles focus among actionMenu and focusable elements within chat message
+        const isShift = !!e.shiftKey;
+
+        const focusableElementsInsideMessage: NodeListOf<HTMLElement> = e.currentTarget.querySelectorAll(
+          '[tabindex="-1"]:not([data-is-focusable="false"])',
+        );
+        const firstFocusableInsideMessage = focusableElementsInsideMessage[0];
+        const lastFocusableInsideMessage = focusableElementsInsideMessage[focusableElementsInsideMessage.length - 1];
+
+        if (e.target === toFocusItemInActionMenu) {
+          // focus is now inside action menu
+          // cycle focus into the first/last focusable element inside chat message
+          if (isShift) {
+            lastFocusableInsideMessage?.focus();
+          } else {
+            firstFocusableInsideMessage?.focus();
+          }
+          e.stopPropagation();
+          e.preventDefault();
+        } else {
+          const boundaryElementInsideMessage = isShift ? firstFocusableInsideMessage : lastFocusableInsideMessage;
+          if (e.target === boundaryElementInsideMessage) {
+            // focus is now on the first/last focusable element inside chat message
+            toFocusItemInActionMenu.focus(); // cycle focus back into action Menu
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }
+      }
     }
-
-    const modifiers: PopperModifiers | undefined = positionActionMenu && [
-      // https://popper.js.org/docs/v2/modifiers/flip/
-      // Forces to flip only in "top-*" positions
-      { name: 'flip', options: { fallbackPlacements: ['top'] } },
-      overflow && {
-        name: 'preventOverflow',
-        options: { boundary: getScrollParent(messageNode) },
-      },
-    ];
-
-    return (
-      <Popper
-        enabled={positionActionMenu}
-        align="end"
-        modifiers={modifiers}
-        position="above"
-        positionFixed={overflow}
-        targetRef={messageNode}
-        {...positioningProps}
-      >
-        {({ scheduleUpdate }) => {
-          updateActionsMenuPosition.current = scheduleUpdate;
-
-          return actionMenuElement;
-        }}
-      </Popper>
-    );
+    _.invoke(props, 'onKeyDown', e, props);
   };
 
   const childrenPropExists = childrenExist(children);
@@ -334,7 +480,9 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
     defaultProps: () => ({ mine }),
   });
 
-  const headerElement = createShorthand(ChatMessageHeader, header, {
+  const readStatusElement = createShorthand(ChatMessageReadStatus, readStatus, {});
+
+  const headerElement = createShorthand(ChatMessageHeader, header || {}, {
     overrideProps: () => ({
       content: (
         <>
@@ -348,7 +496,7 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
   });
 
   const element = (
-    <Ref innerRef={setMessageNode}>
+    <Ref innerRef={messageRef}>
       {getA11Props.unstable_wrapWithFocusZone(
         <ElementType
           {...getA11Props('root', {
@@ -356,6 +504,8 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
             onBlur: handleBlur,
             onFocus: handleFocus,
             onMouseEnter: handleMouseEnter,
+            onMouseLeave: handleMouseLeave,
+            onKeyDown: handleKeyDown,
             ...rtlTextContainer.getAttributes({ forElements: [children] }),
             ...unhandledProps,
           })}
@@ -365,11 +515,13 @@ export const ChatMessage: ComponentWithAs<'div', ChatMessageProps> &
           ) : (
             <>
               {actionMenuElement}
+              <div className={chatMessageSlotClassNames.bar} />
               {badgePosition === 'start' && badgeElement}
               {headerElement}
               {messageContent}
               {reactionGroupPosition === 'end' && reactionGroupElement}
               {badgePosition === 'end' && badgeElement}
+              {readStatusElement}
             </>
           )}
         </ElementType>,
@@ -386,7 +538,6 @@ ChatMessage.displayName = 'ChatMessage';
 ChatMessage.defaultProps = {
   accessibility: chatMessageBehavior,
   badgePosition: 'end',
-  header: {},
   positionActionMenu: true,
   reactionGroupPosition: 'start',
 };
@@ -405,10 +556,13 @@ ChatMessage.propTypes = {
   onBlur: PropTypes.func,
   onFocus: PropTypes.func,
   onMouseEnter: PropTypes.func,
+  onMouseLeave: PropTypes.func,
   positionActionMenu: PropTypes.bool,
   reactionGroup: PropTypes.oneOfType([customPropTypes.collectionShorthand, customPropTypes.itemShorthand]),
   reactionGroupPosition: PropTypes.oneOf(['start', 'end']),
   unstable_overflow: PropTypes.bool,
+  readStatus: customPropTypes.itemShorthand,
+  onKeyDown: PropTypes.func,
 };
 
 ChatMessage.handledProps = Object.keys(ChatMessage.propTypes) as any;

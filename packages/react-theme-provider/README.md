@@ -10,43 +10,56 @@ yarn add @fluentui/react-theme-provider
 
 ## Example usage
 
-First, ensure you use an existing theme, or create your own. Example:
-
-```js
-export const theme: Theme = {
-  /* Provide any stylesheets which should come along with the theme */
-  stylesheets: [
-    '.className { ... }',
-    ...
-  ],
-
-  /* Provide standard fluent tokens here. */
-  tokens: {
-    body: {
-      fill: '#fafafa',
-      text: '#333'
-    }
-  }
-};
-```
-
 Use the theme with Fluent UI by wrapping content within the provider:
 
 ```tsx
+import { webLightTheme } from '@fluentui/react-theme';
 import { ThemeProvider } from '@fluentui/react-theme-provider';
-import { theme } from './theme';
 
 export const App = () => (
-  <ThemeProvider theme={theme}>
-    <>...app</>
+  <ThemeProvider>
+    <App />
   </ThemeProvider>
 );
 ```
 
-## `ThemeProvider` api
+You can also nest `ThemeProvider`s:
 
-The `ThemeProvider` component takes all default `div` html attributes, in addition to the following:
+```tsx
+import { webLightTheme, PartialTheme } from '@fluentui/react-theme';
+import { ThemeProvider } from '@fluentui/react-theme-provider';
 
-| Prop name | Description       |
-| --------- | ----------------- |
-| theme     | The partial theme |
+const headerTheme: PartialTheme = {
+  /* your customizations */
+};
+
+export const App = () => (
+  <ThemeProvider theme={webLightTheme}>
+    <ThemeProvider theme={headerTheme}>
+      <App />
+    </ThemeProvider>
+
+    <App />
+  </ThemeProvider>
+);
+```
+
+## Accessing theme
+
+### useTheme
+
+Theme can be accessed using `useTheme` hook.
+
+```jsx
+import { useTheme } from '@fluentui/react-theme-provider';
+
+const Content = () => {
+  const theme = useTheme();
+};
+
+export const App = () => (
+  <ThemeProvider>
+    <Content />
+  </ThemeProvider>
+);
+```

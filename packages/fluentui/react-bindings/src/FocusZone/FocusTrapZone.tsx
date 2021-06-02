@@ -25,7 +25,7 @@ export class FocusTrapZone extends React.Component<FocusTrapZoneProps, {}> {
 
   _root: { current: HTMLElement | null } = { current: null };
 
-  _previouslyFocusedElementOutsideTrapZone: HTMLElement;
+  _previouslyFocusedElementOutsideTrapZone?: HTMLElement;
   _previouslyFocusedElementInTrapZone?: HTMLElement;
 
   _firstBumper = React.createRef<HTMLDivElement>();
@@ -126,6 +126,7 @@ export class FocusTrapZone extends React.Component<FocusTrapZoneProps, {}> {
     const ElementType = getElementType(this.props);
 
     const bumperProps = {
+      'aria-hidden': true,
       style: {
         pointerEvents: 'none',
         position: 'fixed', // 'fixed' prevents browsers from scrolling to bumpers when viewport does not contain them

@@ -11,7 +11,8 @@ export { colors, contextualColors, naturalColors, primitiveColors, colorScheme, 
 // BORDER STYLES
 //
 export const borderWidth = '1px';
-export const borderRadius = '2px';
+export const borderRadiusSmall = '2px'; // input focus states
+export const borderRadiusMedium = '4px'; // default border radius
 export const focusInnerBorderColor = colors.white;
 export const focusOuterBorderColor = colors.black;
 
@@ -33,6 +34,7 @@ export const fontSizes = {
   medium: pxToRem(14),
   large: pxToRem(18),
   larger: pxToRem(24),
+  largest: pxToRem(28),
 };
 
 //
@@ -53,6 +55,7 @@ export const lineHeightSmall = 1.3333;
 export const lineHeightMedium = 1.4286;
 export const lineHeightLarge = 1.3333;
 export const lineHeightLarger = 1.3333;
+export const lineHeightLargest = 1.3333;
 
 //
 // Z-INDEX

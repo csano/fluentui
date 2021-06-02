@@ -9,12 +9,11 @@ import {
 } from '@fluentui/react-bindings';
 import { handleRef, Ref } from '@fluentui/react-component-ref';
 import * as customPropTypes from '@fluentui/react-proptypes';
-import { indicatorBehavior } from '@fluentui/accessibility';
+import { indicatorBehavior, AccessibilityAttributes, getCode, keyboardKey } from '@fluentui/accessibility';
 import * as React from 'react';
 import * as PropTypes from 'prop-types';
 import * as _ from 'lodash';
 import cx from 'classnames';
-import { getCode, keyboardKey } from '@fluentui/keyboard-key';
 import computeScrollIntoView from 'compute-scroll-into-view';
 
 import { ShorthandRenderFunction, ShorthandValue, ShorthandCollection, FluentComponentStaticProps } from '../../types';
@@ -49,7 +48,10 @@ import {
   PositioningProps,
   PopperShorthandProps,
   partitionPopperPropsFromShorthand,
+  AutoSize,
+  AUTOSIZES,
 } from '../../utils/positioner';
+import { CloseIcon, ChevronDownIcon } from '@fluentui/react-icons-northstar';
 
 export interface DownshiftA11yStatusMessageOptions<Item> extends Required<A11yStatusMessageOptions<Item>> {}
 
@@ -68,6 +70,12 @@ export interface DropdownSlotClassNames {
 export interface DropdownProps extends UIComponentProps<DropdownProps>, PositioningProps {
   /** The index of the currently selected item, if the dropdown supports multiple selection. */
   activeSelectedIndex?: number;
+
+  /** Identifies the element (or elements) that labels the current element. Will be passed to `triggerButton`. */
+  'aria-labelledby'?: AccessibilityAttributes['aria-labelledby'];
+
+  /** Indicates the entered value does not conform to the format expected by the application. Will be passed to `triggerButton`. */
+  'aria-invalid'?: AccessibilityAttributes['aria-invalid'];
 
   /** A dropdown item can show a check indicator if it is selected. */
   checkable?: boolean;
@@ -115,6 +123,9 @@ export interface DropdownProps extends UIComponentProps<DropdownProps>, Position
      */
     onRemove?: (item: ShorthandValue<DropdownItemProps>) => string;
   };
+
+  /** A label for selected items listbox. */
+  a11ySelectedItemsMessage?: string;
 
   /**
    * Callback that provides status announcement message with number of items in the list, using Arrow Up/Down keys to navigate through them and, if multiple, using Arrow Left/Right to navigate through selected items.
@@ -208,7 +219,7 @@ export interface DropdownProps extends UIComponentProps<DropdownProps>, Position
    * Called when the focus moves out from dropdown.
    * @param event - React's original SyntheticEvent.
    */
-  onBlur?: (event: React.MouseEvent | React.KeyboardEvent | null) => void;
+  onBlur?: (event: React.FocusEvent | null) => void;
 
   /** A dropdown's open state can be controlled. */
   open?: boolean;
@@ -266,6 +277,7 @@ export type DropdownStylesProps = Required<
   hasToggleIndicator: boolean;
   isFromKeyboard: boolean;
   search: boolean;
+  hasItemsSelected: boolean;
 };
 
 type DropdownStateForInvoke = {
@@ -326,10 +338,7 @@ function getFilteredValues(
 
     return {
       filteredItems: filteredItemsByValue.filter(
-        item =>
-          itemToString(item)
-            .toLowerCase()
-            .indexOf(searchQuery.toLowerCase()) !== -1,
+        item => itemToString(item).toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1,
       ),
       filteredItemStrings,
     };
@@ -353,6 +362,7 @@ const isEmpty = prop => {
  * Implements [ARIA Combo Box](https://www.w3.org/TR/wai-aria-practices-1.1/#combobox) design pattern, uses aria-live to announce state changes.
  * @accessibilityIssues
  * [Issue 991203: VoiceOver doesn't narrate properly elements in the input/combobox](https://bugs.chromium.org/p/chromium/issues/detail?id=991203)
+ * [JAWS - ESC (ESCAPE) not closing collapsible listbox (dropdown) on first time #528](https://github.com/FreedomScientific/VFO-standards-support/issues/528)
  */
 export const Dropdown: ComponentWithAs<'div', DropdownProps> &
   FluentComponentStaticProps<DropdownProps> & {
@@ -368,6 +378,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
   const {
     align,
     'aria-labelledby': ariaLabelledby,
+    'aria-invalid': ariaInvalid,
     clearable,
     clearIndicator,
     checkable,
@@ -378,6 +389,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
     error,
     fluid,
     getA11ySelectionMessage,
+    a11ySelectedItemsMessage,
     getA11yStatusMessage,
     inline,
     inverted,
@@ -401,7 +413,9 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
     styles,
     toggleIndicator,
     triggerButton,
+    unstable_disableTether,
     unstable_pinned,
+    autoSize,
     variables,
   } = props;
   const [list, positioningProps] = partitionPopperPropsFromShorthand(props.list);
@@ -476,6 +490,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
       open,
       position,
       search: !!search,
+      hasItemsSelected: value.length > 0,
     }),
     mapPropsToInlineStyles: () => ({
       className,
@@ -526,6 +541,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
       onKeyDown: e => {
         handleTriggerButtonKeyDown(e);
       },
+      'aria-invalid': ariaInvalid,
       'aria-label': undefined,
       'aria-labelledby': [ariaLabelledby, triggerButtonId].filter(l => !!l).join(' '),
     });
@@ -636,8 +652,10 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
           rtl={context.rtl}
           enabled={open}
           targetRef={containerRef}
+          unstable_disableTether={unstable_disableTether}
           unstable_pinned={unstable_pinned}
           positioningDependencies={[items.length]}
+          autoSize={autoSize}
           {...positioningProps}
         >
           {List.create(list, {
@@ -750,7 +768,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
       return null;
     }
 
-    return value.map((item: DropdownItemProps, index) =>
+    const selectedItems = value.map((item: DropdownItemProps, index) =>
       // (!) an item matches DropdownItemProps
       DropdownSelectedItem.create(item, {
         defaultProps: () => ({
@@ -765,6 +783,11 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
         overrideProps: handleSelectedItemOverrides(item),
         render: renderSelectedItem,
       }),
+    );
+    return (
+      <div role="listbox" tabIndex={-1} aria-label={a11ySelectedItemsMessage}>
+        {selectedItems}
+      </div>
     );
   };
 
@@ -833,10 +856,14 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
         }
 
         if (multiple) {
-          setTimeout(() => (selectedItemsRef.current.scrollTop = selectedItemsRef.current.scrollHeight), 0);
+          context.target?.defaultView.setTimeout(
+            () => (selectedItemsRef.current.scrollTop = selectedItemsRef.current.scrollHeight),
+            0,
+          );
         }
 
-        tryFocusTriggerButton();
+        // timeout because of NVDA, otherwise it narrates old button value/state
+        context.target?.defaultView.setTimeout(() => tryFocusTriggerButton(), 100);
 
         break;
       case Downshift.stateChangeTypes.keyDownEscape:
@@ -1498,6 +1525,7 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
 
             // Replicating same config that Downshift uses
             const actions = computeScrollIntoView(nodeToScroll, {
+              boundary: menu, // Explicitly set boundary to avoid unnecessary scrolling by checking all parent elements
               scrollMode: 'if-needed',
               block: 'nearest',
               inline: 'nearest',
@@ -1539,17 +1567,20 @@ export const Dropdown: ComponentWithAs<'div', DropdownProps> &
                 onClick={search && !open ? handleContainerClick : undefined}
               >
                 <div ref={selectedItemsRef} className={cx(dropdownSlotClassNames.selectedItems, classes.selectedItems)}>
+                  {/* We previously were rendering the trigger button after selected items list,
+                  after listbox wrapper was introduced we moved it to before and
+                   set as absolute to avoid visual regressions   */}
+                  {!search && renderTriggerButton(getToggleButtonProps)}
                   {multiple && renderSelectedItems()}
-                  {search
-                    ? renderSearchInput(
-                        accessibilityRootPropsRest,
-                        highlightedIndex,
-                        getInputProps,
-                        selectItemAtIndex,
-                        toggleMenu,
-                        variables,
-                      )
-                    : renderTriggerButton(getToggleButtonProps)}
+                  {search &&
+                    renderSearchInput(
+                      accessibilityRootPropsRest,
+                      highlightedIndex,
+                      getInputProps,
+                      selectItemAtIndex,
+                      toggleMenu,
+                      variables,
+                    )}
                 </div>
                 {showClearIndicator
                   ? Box.create(clearIndicator, {
@@ -1665,14 +1696,19 @@ Dropdown.propTypes = {
   searchInput: customPropTypes.itemShorthand,
   toggleIndicator: customPropTypes.shorthandAllowingChildren,
   triggerButton: customPropTypes.itemShorthand,
+  unstable_disableTether: PropTypes.oneOf([true, false, 'all']),
   unstable_pinned: PropTypes.bool,
+  autoSize: PropTypes.oneOf<AutoSize>(AUTOSIZES),
   value: PropTypes.oneOfType([customPropTypes.itemShorthand, customPropTypes.collectionShorthand]),
+  'aria-labelledby': PropTypes.string,
+  'aria-invalid': PropTypes.bool,
+  a11ySelectedItemsMessage: PropTypes.string,
 };
 Dropdown.handledProps = Object.keys(Dropdown.propTypes) as any;
 
 Dropdown.defaultProps = {
   align: 'start',
-  clearIndicator: {},
+  clearIndicator: <CloseIcon outline />,
   itemToString: item => {
     if (!item || React.isValidElement(item)) {
       return '';
@@ -1691,7 +1727,7 @@ Dropdown.defaultProps = {
   },
   list: {},
   position: 'below',
-  toggleIndicator: {},
+  toggleIndicator: <ChevronDownIcon outline />,
   triggerButton: {},
 };
 

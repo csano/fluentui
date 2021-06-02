@@ -1,14 +1,10 @@
 import * as React from 'react';
-import * as _ from 'lodash';
-import { useImmerReducer, Reducer } from 'use-immer';
-import * as axeCore from 'axe-core';
-import { Text, Button, Table, Divider } from '@fluentui/react-northstar';
+import DocumentTitle from 'react-document-title';
+import { Box, Text, Button, Header, Tooltip, Menu, tabListBehavior } from '@fluentui/react-northstar';
+import { FilesCodeIcon, AcceptIcon, AddIcon, MenuIcon } from '@fluentui/react-icons-northstar';
 import { EventListener } from '@fluentui/react-component-event-listener';
-import { Editor, renderElementToJSX } from '@fluentui/docs-components';
-
+import { renderElementToJSX, CodeSandboxExporter, CodeSandboxState } from '@fluentui/docs-components';
 import { componentInfoContext } from '../componentInfo/componentInfoContext';
-import { ComponentInfo } from '../componentInfo/types';
-
 // import Anatomy from './Anatomy';
 import { BrowserWindow } from './BrowserWindow';
 import { Canvas } from './Canvas';
@@ -16,336 +12,73 @@ import { Description } from './Description';
 import { Knobs } from './Knobs';
 import { List } from './List';
 import { Toolbar } from './Toolbar';
-
-import {
-  jsonTreeCloneElement,
-  jsonTreeDeleteElement,
-  jsonTreeFindElement,
-  jsonTreeFindParent,
-  renderJSONTreeToJSXElement,
-  resolveDraggingElement,
-  resolveDrop,
-} from '../config';
-import { readTreeFromStore, readTreeFromURL, writeTreeToStore, writeTreeToURL } from '../utils/treeStore';
-
-import { DesignerMode, JSONTreeElement } from './types';
+import { jsonTreeFindElement, renderJSONTreeToJSXElement, getCodeSandboxInfo, resolveDraggingElement } from '../config';
+import { writeTreeToStore, writeTreeToURL } from '../utils/treeStore';
+import { JSONTreeElement } from './types';
 import { ComponentTree } from './ComponentTree';
 import { GetShareableLink } from './GetShareableLink';
-import { codeToTree } from '../utils/codeToTree';
 import { ErrorBoundary } from './ErrorBoundary';
 import { InsertComponent } from './InsertComponent';
-import { DownloadIcon } from '@fluentui/react-icons-northstar';
-import { ErrorIcon } from './ErrorFrame';
+import { debug, useDesignerState } from '../state';
+import { useAxeOnElement, useMode } from '../hooks';
+import { ErrorPanel } from './ErrorPanel';
 
 const HEADER_HEIGHT = '3rem';
 
-function debug(...args) {
-  console.log('--Designer', ...args);
-}
+const CodeEditor = React.lazy(async () => {
+  const _CodeEditor = (await import(/* webpackChunkName: "codeeditor" */ './CodeEditor')).CodeEditor;
+  return {
+    default: _CodeEditor,
+  };
+});
 
-function getDefaultJSONTree(): JSONTreeElement {
-  return { uuid: 'builder-root', type: 'div' };
-}
-
-const focusTreeTitle = uuid => {
-  // TODO: use refs
-  const element = document.querySelector(`#${uuid} [data-is-focusable]`) as HTMLElement;
-  element && element.focus();
+export type NavBarItemProps = {
+  title: string;
+  icon: any;
+  isSelected: boolean;
+  onClickHandler: () => void;
 };
 
-const affectedNodes = [];
-
-// const tableOfViolations = violations => {
-//   const rows = violations.map((violation, index) => {
-//     return {
-//       styles: { height: '12rem' },
-//       key: index,
-//       items: [
-//         violation.failureSummary,
-//         violation.description,
-//         violation.target,
-//         violation.html,
-//         violation.xpath,
-//         violation.dataBuilderId,
-//       ],
-//     };
-//   });
-//   const header = {
-//     items: ['Failure summary', 'Description', 'Target', 'HTML', 'XPATH', 'DataBuilderId'],
-//   };
-//   return violations.length > 0 && <Table header={header} rows={rows} aria-label="Specification component table" />;
-// };
-
-function findDataBuilderId(element) {
-  const parentElement = element.parentElement;
-  if (!parentElement) {
-    return 'cannot find parent element';
-  }
-  const parentElementDataBuilderId = parentElement.getAttribute('data-builder-id');
-  if (parentElementDataBuilderId) {
-    return parentElementDataBuilderId;
-  }
-  return findDataBuilderId(parentElement);
-}
-
-const getDataBuilderId = element => {
-  if (!element) {
-    return 'data-builder-id not found';
-  }
-  const dataBuilderId = (element as any).getAttribute('data-builder-id');
-  if (dataBuilderId) {
-    return dataBuilderId;
-  }
-  return findDataBuilderId(element);
-};
-
-const processNode = (node, errDescription) => {
-  if (node.target[0] && node.target[1] && node.target[0].indexOf('frame') >= 0 && node.target[1].indexOf('html') >= 0) {
-    // return because these errors are reported generally for iframe, what is not real case
-    return;
-  }
-
-  const iframe: any = document.querySelector(`${node.target[0]}`);
-  const affectedElement = iframe.contentWindow.document.querySelector(`${node.target[1]}`);
-
-  const dataBuilderIdValue = getDataBuilderId(affectedElement);
-  affectedNodes.push({
-    html: node.html,
-    dataBuilderId: dataBuilderIdValue,
-    failureSummary: node.failureSummary,
-    description: errDescription,
-    target: node.target.length > 1 ? node.target.join(' ') : node.target[0],
-    xpath: node.xpath.length > 1 ? node.xpath.join(' ') : node.xpath[0],
-  });
-};
-
-type JSONTreeOrigin = 'store' | 'url';
-
-type DesignerState = {
-  draggingElement: JSONTreeElement;
-  jsonTree: JSONTreeElement;
-  jsonTreeOrigin: JSONTreeOrigin;
-  selectedComponentInfo: ComponentInfo; // FIXME: should be computed in render?
-  selectedJSONTreeElementUuid: JSONTreeElement['uuid'];
-  showCode: boolean;
-  enabledVirtualCursor: boolean;
-  code: string | null; // only valid if showCode is set to true
-  codeError: string | null;
-  insertComponent: { uuid: string; where: string; parentUuid?: string };
-  canvasMessage?: string;
-};
-
-type DesignerAction =
-  | { type: 'DRAG_START'; component: JSONTreeElement }
-  | { type: 'DRAG_ABORT' }
-  | { type: 'DRAG_DROP'; dropParent: JSONTreeElement; dropIndex: number }
-  | { type: 'DRAG_CLONE' }
-  | { type: 'DRAG_MOVE' }
-  | { type: 'SELECT_COMPONENT'; component: JSONTreeElement }
-  | { type: 'SELECT_PARENT' }
-  | { type: 'DELETE_SELECTED_COMPONENT' }
-  | { type: 'PROP_CHANGE'; component: JSONTreeElement; propName: string; propValue: any }
-  | { type: 'SWITCH_TO_STORE' }
-  | { type: 'RESET_STORE' }
-  | { type: 'SHOW_CODE'; show: boolean }
-  | { type: 'ENABLE_VIRTUAL_CURSROR'; enabledVirtualCursor: boolean }
-  | { type: 'SOURCE_CODE_CHANGE'; code: string }
-  | { type: 'OPEN_ADD_DIALOG'; uuid: string; where: string; parent?: string }
-  | { type: 'CLOSE_ADD_DIALOG' }
-  | { type: 'ADD_COMPONENT'; component: string }
-  | { type: 'UPLOAD_TREE'; jsonTree: JSONTreeElement };
-
-const stateReducer: Reducer<DesignerState, DesignerAction> = (draftState, action) => {
-  debug(`stateReducer: ${action.type}`, { action, draftState: JSON.parse(JSON.stringify(draftState)) });
-  let treeChanged = false;
-
-  switch (action.type) {
-    case 'DRAG_START':
-      draftState.draggingElement = action.component;
-      break;
-
-    case 'DRAG_ABORT':
-      draftState.draggingElement = null;
-      break;
-
-    case 'DRAG_DROP':
-      if (action.dropParent) {
-        const dropParent = jsonTreeFindElement(draftState.jsonTree, action.dropParent.uuid);
-        resolveDrop(draftState.draggingElement, dropParent, action.dropIndex);
-        treeChanged = true;
-      }
-
-      const addedComponent = jsonTreeFindElement(draftState.jsonTree, draftState.draggingElement.uuid);
-
-      draftState.draggingElement = null;
-      if (addedComponent) {
-        draftState.selectedJSONTreeElementUuid = addedComponent.uuid;
-        draftState.selectedComponentInfo = componentInfoContext.byDisplayName[addedComponent.displayName];
-      }
-
-      break;
-
-    case 'DRAG_CLONE':
-      draftState.draggingElement = jsonTreeCloneElement(
-        draftState.jsonTree,
-        jsonTreeFindElement(draftState.jsonTree, draftState.selectedJSONTreeElementUuid),
-      );
-      break;
-
-    case 'DRAG_MOVE':
-      draftState.draggingElement = jsonTreeCloneElement(
-        draftState.jsonTree,
-        jsonTreeFindElement(draftState.jsonTree, draftState.selectedJSONTreeElementUuid),
-      );
-      jsonTreeDeleteElement(draftState.jsonTree, draftState.selectedJSONTreeElementUuid);
-      treeChanged = true;
-      break;
-
-    case 'SELECT_COMPONENT':
-      if (action.component && draftState.selectedJSONTreeElementUuid !== action.component.uuid) {
-        draftState.selectedJSONTreeElementUuid = action.component.uuid;
-        draftState.selectedComponentInfo = componentInfoContext.byDisplayName[action.component.displayName];
-      } else {
-        draftState.selectedJSONTreeElementUuid = null;
-        draftState.selectedComponentInfo = null;
-      }
-      break;
-
-    case 'SELECT_PARENT':
-      const parent = jsonTreeFindParent(draftState.jsonTree, draftState.selectedJSONTreeElementUuid);
-      if (parent) {
-        draftState.selectedJSONTreeElementUuid = parent.uuid;
-        draftState.selectedComponentInfo = componentInfoContext.byDisplayName[parent.displayName];
-      }
-      break;
-
-    case 'DELETE_SELECTED_COMPONENT':
-      if (draftState.selectedJSONTreeElementUuid) {
-        jsonTreeDeleteElement(draftState.jsonTree, draftState.selectedJSONTreeElementUuid);
-        draftState.selectedJSONTreeElementUuid = null;
-        draftState.selectedComponentInfo = null;
-        treeChanged = true;
-      }
-      break;
-
-    case 'PROP_CHANGE':
-      const editedComponent = jsonTreeFindElement(draftState.jsonTree, action.component.uuid);
-      if (editedComponent) {
-        if (!editedComponent.props) {
-          editedComponent.props = {};
+export const NavBarItem: React.FunctionComponent<NavBarItemProps> = ({ title, icon, isSelected, onClickHandler }) => {
+  return (
+    <Box
+      styles={({ theme }) => ({
+        height: '3.4rem',
+        display: 'flex',
+        alignItems: 'center',
+        background: isSelected ? `${theme.siteVariables.colorScheme.default.background2}` : 'inherit',
+        position: 'relative',
+      })}
+    >
+      {isSelected && (
+        <Box
+          styles={({ theme }) => ({
+            position: 'absolute',
+            width: '2px',
+            height: '32px',
+            background: `${theme.siteVariables.colorScheme.brand.foreground1}`,
+            top: '8px',
+            left: '4px',
+          })}
+        />
+      )}
+      <Tooltip
+        pointing
+        position="after"
+        align="center"
+        trigger={
+          <Menu.Item iconOnly style={{ marginLeft: '6px' }} onClick={onClickHandler} active={isSelected}>
+            {icon}
+          </Menu.Item>
         }
-        editedComponent.props[action.propName] = action.propValue;
-        treeChanged = true;
-      }
-      break;
-
-    case 'SWITCH_TO_STORE':
-      draftState.jsonTree = readTreeFromStore() || getDefaultJSONTree();
-      draftState.jsonTreeOrigin = 'store';
-      treeChanged = true;
-      break;
-
-    case 'RESET_STORE':
-      draftState.jsonTree = getDefaultJSONTree();
-      draftState.jsonTreeOrigin = 'store';
-      treeChanged = true;
-      break;
-
-    case 'UPLOAD_TREE':
-      draftState.jsonTree = action.jsonTree;
-      draftState.jsonTreeOrigin = 'store';
-      treeChanged = true;
-      break;
-
-    case 'SHOW_CODE':
-      try {
-        draftState.showCode = action.show;
-        draftState.code = action.show ? renderElementToJSX(renderJSONTreeToJSXElement(draftState.jsonTree)) : null;
-      } catch (e) {
-        console.error('Failed to convert tree to code.', e.toString());
-      }
-      break;
-    case 'ENABLE_VIRTUAL_CURSROR':
-      draftState.enabledVirtualCursor = action.enabledVirtualCursor;
-      break;
-
-    case 'SOURCE_CODE_CHANGE':
-      draftState.code = action.code;
-      draftState.selectedJSONTreeElementUuid = null;
-      draftState.selectedComponentInfo = null;
-      try {
-        draftState.jsonTree = codeToTree(action.code);
-        draftState.codeError = null;
-      } catch (e) {
-        draftState.codeError = e.message;
-      }
-      break;
-
-    case 'OPEN_ADD_DIALOG':
-      draftState.insertComponent = {
-        where: action.where,
-        uuid: action.uuid,
-        parentUuid: `${jsonTreeFindParent(draftState.jsonTree, action.uuid)?.uuid}`,
-      };
-      break;
-
-    case 'CLOSE_ADD_DIALOG':
-      draftState.insertComponent = null;
-      break;
-
-    case 'ADD_COMPONENT': {
-      const element = resolveDraggingElement(action.component);
-
-      let parent: JSONTreeElement = undefined;
-      let index = 0;
-      const { where, uuid, parentUuid } = draftState.insertComponent;
-      draftState.insertComponent = null;
-
-      if (where === 'first') {
-        parent = draftState.jsonTree;
-      } else if (where === 'child') {
-        parent = jsonTreeFindElement(draftState.jsonTree, uuid);
-      } else {
-        parent = jsonTreeFindElement(draftState.jsonTree, parentUuid);
-        index = parent.props.children.findIndex(c => c['uuid'] === uuid);
-        if (index === -1) {
-          index = 0;
-        } else {
-          where === 'after' && index++;
-        }
-      }
-
-      resolveDrop(element, parent, index);
-
-      draftState.selectedJSONTreeElementUuid = element.uuid;
-      draftState.selectedComponentInfo = componentInfoContext.byDisplayName[element.displayName];
-      treeChanged = true;
-      setTimeout(() => focusTreeTitle(element.uuid));
-      break;
-    }
-
-    default:
-      throw new Error(`Invalid action ${action}`);
-  }
-
-  if (treeChanged && draftState.showCode) {
-    draftState.code = renderElementToJSX(renderJSONTreeToJSXElement(draftState.jsonTree));
-    draftState.codeError = null;
-  }
+        content={title}
+      />
+    </Box>
+  );
 };
-
-function useMode(): [{ mode: DesignerMode; isExpanding: boolean; isSelecting: boolean }, (mode: DesignerMode) => void] {
-  const [mode, setMode] = React.useState<DesignerMode>('build');
-  const isExpanding = mode === 'build';
-  const isSelecting = mode === 'build' || mode === 'design';
-
-  return [{ mode, isExpanding, isSelecting }, setMode];
-}
 
 export const Designer: React.FunctionComponent = () => {
   debug('render');
-
-  const [canvasMessage, setCanvasMessage] = React.useState('');
 
   const dragAndDropData = React.useRef<{
     position: { x: number; y: number };
@@ -355,115 +88,18 @@ export const Designer: React.FunctionComponent = () => {
 
   const draggingElementRef = React.useRef<HTMLDivElement>();
 
-  const [state, dispatch] = useImmerReducer(stateReducer, null, () => {
-    let jsonTreeOrigin: JSONTreeOrigin = 'url';
-    let jsonTree = readTreeFromURL(window.location.href);
-    if (!jsonTree) {
-      jsonTree = readTreeFromStore() || getDefaultJSONTree();
-      jsonTreeOrigin = 'store';
-    }
-
-    return {
-      draggingElement: null,
-      jsonTree,
-      jsonTreeOrigin,
-      selectedComponentInfo: null,
-      selectedJSONTreeElementUuid: null,
-      showCode: false,
-      enabledVirtualCursor: false,
-      code: null,
-      codeError: null,
-      insertComponent: null,
-    };
-  });
-
+  const [state, dispatch] = useDesignerState();
   const [{ mode, isExpanding, isSelecting }, setMode] = useMode();
   const [showJSONTree, handleShowJSONTreeChange] = React.useState(false);
-  const [axeErrors, setAxeErrors] = React.useState([]);
-  const [accessibilityAttributesErrors, setAccessibilityErrors] = React.useState({});
+  const [headerMessage, setHeaderMessage] = React.useState('');
 
-  const accessibilityErrors = _.mapValues(accessibilityAttributesErrors, aaForComponent =>
-    _.mapValues(aaForComponent, message => ({ source: 'AA', error: message })),
-  );
-  for (let i = 0; i < axeErrors.length; i++) {
-    const id = axeErrors[i].dataBuilderId;
-    if (!accessibilityErrors[id]) {
-      accessibilityErrors[id] = {};
+  const [axeErrors, runAxeOnElement] = useAxeOnElement();
+
+  React.useEffect(() => {
+    if (state.selectedJSONTreeElementUuid) {
+      runAxeOnElement(state.selectedJSONTreeElementUuid);
     }
-    accessibilityErrors[id][i] = { source: 'AXE', error: axeErrors[i].failureSummary };
-  }
-  const [showAccSpec, handleShowAccSpecChange] = React.useState(false);
-
-  const getAxeResults = () => {
-    const iframeId = document.getElementsByTagName('iframe')[0].getAttribute('id');
-    const $iframe = document.getElementById(iframeId);
-
-    axeCore.run(
-      $iframe,
-      {
-        xpath: true,
-        elementRef: true,
-        rules: {
-          // excluding rules which are related to the whole page not to components
-          'page-has-heading-one': { enabled: false },
-          region: { enabled: false },
-          'landmark-one-main': { enabled: false },
-        },
-      },
-      (err, result) => {
-        if (err) {
-          console.error('Axe failed', err);
-        } else {
-          console.table(result.violations);
-          if (result.violations.length > 0) {
-            result.violations.forEach(violation => {
-              if (violation.nodes.length > 0) {
-                const description = violation.description;
-                violation.nodes.forEach(node => {
-                  processNode(node, description);
-                });
-              }
-            });
-          }
-          setAxeErrors(affectedNodes);
-        }
-      },
-    );
-  };
-
-  const [components, setComponents] = React.useState([]);
-
-  const componentsExcludedFromAccSpec = ['Flex', 'Box', 'FlexItem'];
-  const componentsForAccSpec = [];
-
-  const jsonTreeToItems = (tree: any) => {
-    tree.props?.children?.forEach(item => {
-      if (componentsExcludedFromAccSpec.indexOf(item.displayName) === -1) {
-        componentsForAccSpec.push({
-          name: item.displayName,
-        });
-      }
-      jsonTreeToItems(item);
-    });
-  };
-
-  const generateAccSpec = () => {
-    jsonTreeToItems(jsonTree);
-    setComponents(componentsForAccSpec);
-  };
-
-  const tableOfComponents = () => {
-    const rows = components.map((item, index) => {
-      return {
-        key: index,
-        items: ['', item.name, '', '', ''],
-      };
-    });
-    const header = {
-      items: ['Element', 'Control type', 'Screen reader ', 'Behavior', 'Comments'],
-    };
-    return components.length > 0 && <Table header={header} rows={rows} aria-label="Specification component table" />;
-  };
+  }, [state.selectedJSONTreeElementUuid, runAxeOnElement]);
 
   React.useEffect(() => {
     if (state.jsonTreeOrigin === 'store') {
@@ -477,9 +113,10 @@ export const Designer: React.FunctionComponent = () => {
     jsonTreeOrigin,
     /* selectedComponentInfo, */
     selectedJSONTreeElementUuid,
-    showCode,
     enabledVirtualCursor,
+    showCode,
     code,
+    activeTab,
     codeError,
     insertComponent,
   } = state;
@@ -497,13 +134,6 @@ export const Designer: React.FunctionComponent = () => {
     }
   }, [dispatch]);
 
-  const handleUpload = React.useCallback(
-    jsonTree => {
-      dispatch({ type: 'UPLOAD_TREE', jsonTree });
-    },
-    [dispatch],
-  );
-
   const handleShowCodeChange = React.useCallback(
     showCode => {
       dispatch({ type: 'SHOW_CODE', show: showCode });
@@ -511,9 +141,16 @@ export const Designer: React.FunctionComponent = () => {
     [dispatch],
   );
 
+  const selectActiveTab = React.useCallback(
+    tab => {
+      dispatch({ type: 'SWITCH_TAB', tab });
+    },
+    [dispatch],
+  );
+
   const handleEnableVirtualCursorChange = React.useCallback(
-    enableVirtualCursor => {
-      dispatch({ type: 'ENABLE_VIRTUAL_CURSROR', enabledVirtualCursor: enableVirtualCursor });
+    enabledVC => {
+      dispatch({ type: 'ENABLE_VIRTUAL_CURSOR', enabledVirtualCursor: enabledVC });
     },
     [dispatch],
   );
@@ -521,7 +158,10 @@ export const Designer: React.FunctionComponent = () => {
   const handleDragStart = React.useCallback(
     (info, e) => {
       dragAndDropData.current.position = { x: e.clientX, y: e.clientY };
-      dispatch({ type: 'DRAG_START', component: resolveDraggingElement(info.displayName) });
+      dispatch({
+        type: 'DRAG_START',
+        component: resolveDraggingElement(info.displayName, info.moduleName),
+      });
     },
     [dispatch],
   );
@@ -537,8 +177,6 @@ export const Designer: React.FunctionComponent = () => {
       draggingElementRef.current.style.top = `${dragAndDropData.current.position.y}px`;
     }
   }, []);
-
-  const handleCanvasMessage = React.useCallback((canvasMessage: string) => setCanvasMessage(canvasMessage), []);
 
   const handleCanvasMouseUp = React.useCallback(() => {
     dispatch({
@@ -577,6 +215,17 @@ export const Designer: React.FunctionComponent = () => {
     [dispatch],
   );
 
+  const handlePropDelete = React.useCallback(
+    ({ jsonTreeElement, name, value }) => {
+      dispatch({
+        type: 'PROP_DELETE',
+        component: jsonTreeElement,
+        propName: name,
+      });
+    },
+    [dispatch],
+  );
+
   const handleCloneComponent = React.useCallback(
     (e: MouseEvent) => {
       dragAndDropData.current.position = { x: e.clientX, y: e.clientY };
@@ -593,7 +242,7 @@ export const Designer: React.FunctionComponent = () => {
     [dispatch],
   );
 
-  const handleDeleteComponent = React.useCallback(() => {
+  const handleDeleteSelectedComponent = React.useCallback(() => {
     dispatch({ type: 'DELETE_SELECTED_COMPONENT' });
   }, [dispatch]);
 
@@ -601,9 +250,28 @@ export const Designer: React.FunctionComponent = () => {
     dispatch({ type: 'SELECT_PARENT' });
   }, [dispatch]);
 
+  const handleUndo = () => {
+    dispatch({
+      type: 'UNDO',
+    });
+  };
+
+  const handleRedo = () => {
+    dispatch({
+      type: 'REDO',
+    });
+  };
+
   const handleSourceCodeChange = React.useCallback(
-    code => {
-      dispatch({ type: 'SOURCE_CODE_CHANGE', code });
+    (code, jsonTree) => {
+      dispatch({ type: 'SOURCE_CODE_CHANGE', code, jsonTree });
+    },
+    [dispatch],
+  );
+
+  const handleSourceCodeError = React.useCallback(
+    (code, error) => {
+      dispatch({ type: 'SOURCE_CODE_ERROR', code, error });
     },
     [dispatch],
   );
@@ -614,13 +282,55 @@ export const Designer: React.FunctionComponent = () => {
 
   const switchToStore = React.useCallback(() => {
     dispatch({ type: 'SWITCH_TO_STORE' });
-    // FIXME: remove tree_lz from current URL
+    const url = window.location.href.split('#')[0];
+    window.history.pushState('', document.title, url);
   }, [dispatch]);
 
-  const handleAccessibilityErrors = React.useCallback(errors => {
-    setAccessibilityErrors(errors);
-    debug('handleAccessibilityErrors', errors);
-  }, []);
+  const hotkeys = {
+    'Ctrl+c': () => {
+      if (state.selectedJSONTreeElementUuid && state.selectedJSONTreeElementUuid !== 'builder-root') {
+        dragAndDropData.current.position = { x: -300, y: -300 };
+        dispatch({ type: 'DRAG_CLONE' });
+      }
+    },
+    'Ctrl+v': () => {
+      if (state.draggingElement) {
+        dispatch({
+          type: 'DRAG_DROP',
+          dropParent: dragAndDropData.current.dropParent,
+          dropIndex: dragAndDropData.current.dropIndex,
+        });
+      }
+    },
+    'Ctrl+z': handleUndo,
+    'Shift+P': handleGoToParentComponent,
+    'Ctrl+Shift+Z': handleRedo,
+    Delete: handleDeleteSelectedComponent,
+    'Shift+D': () => {
+      setMode('design');
+    },
+    'Shift+U': () => {
+      setMode('use');
+    },
+    'Shift+B': () => {
+      setMode('build');
+    },
+    'Shift+C': () => {
+      handleShowCodeChange(!state.showCode);
+    },
+    'Shift+J': () => {
+      handleShowJSONTreeChange(!showJSONTree);
+    },
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    let command = '';
+    command += e.altKey ? 'Alt+' : '';
+    command += e.ctrlKey || e.metaKey ? 'Ctrl+' : '';
+    command += e.shiftKey ? 'Shift+' : '';
+    command += e.key;
+    hotkeys.hasOwnProperty(command) && hotkeys[command]();
+  };
 
   const handleOpenAddComponentDialog = React.useCallback(
     (uuid: string, where: string) => {
@@ -634,8 +344,8 @@ export const Designer: React.FunctionComponent = () => {
   }, [dispatch]);
 
   const handleAddComponent = React.useCallback(
-    (component: string) => {
-      dispatch({ type: 'ADD_COMPONENT', component });
+    (component: string, module: string) => {
+      dispatch({ type: 'ADD_COMPONENT', component, module });
     },
     [dispatch],
   );
@@ -647,17 +357,19 @@ export const Designer: React.FunctionComponent = () => {
     selectedJSONTreeElement.uuid !== 'builder-root' &&
     selectedJSONTreeElement;
 
+  const codeSandboxData = getCodeSandboxInfo(jsonTree, renderElementToJSX(renderJSONTreeToJSXElement(jsonTree)));
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        background: '#fff',
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
       }}
     >
+      <DocumentTitle title={`Fluent UI Builder`} />
+      <EventListener type="keydown" listener={handleKeyDown} target={document} />
       {insertComponent && (
         <InsertComponent onDismiss={handleCloseAddComponentDialog} onComponentAdded={handleAddComponent} />
       )}
@@ -695,27 +407,61 @@ export const Designer: React.FunctionComponent = () => {
         isExpanding={isExpanding}
         isSelecting={isSelecting}
         mode={mode}
-        onEnableVirtualCursor={handleEnableVirtualCursorChange}
-        eenabledVirtualCursor={enabledVirtualCursor}
         onShowCodeChange={handleShowCodeChange}
         onShowJSONTreeChange={handleShowJSONTreeChange}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={state.history.length > 0}
+        canRedo={state.redo.length > 0}
         onReset={handleReset}
-        onUpload={handleUpload}
         onModeChange={setMode}
-        onShowAccSpecChange={handleShowAccSpecChange}
-        showAccSpec={showAccSpec}
         showCode={showCode}
         showJSONTree={showJSONTree}
-        showAxeErrors={getAxeResults}
+        enabledVirtualCursor={enabledVirtualCursor}
+        onEnableVirtualCursor={handleEnableVirtualCursorChange}
         style={{ flex: '0 0 auto', width: '100%', height: HEADER_HEIGHT }}
       />
 
       <div style={{ display: 'flex', flex: 1, minWidth: '10rem', overflow: 'hidden' }}>
+        <Menu
+          accessibility={tabListBehavior}
+          vertical
+          styles={({ theme }) => ({
+            background: '#FAF9F8',
+            border: '0px',
+            borderRight: `1px solid ${theme.siteVariables.colorScheme.default.border2}`,
+            borderRadius: '0px',
+            display: 'flex',
+            flexDirection: 'column',
+            width: '3.4rem',
+            transition: 'opacity 0.2s',
+            position: 'relative',
+            padding: '0px',
+            ...(mode === 'use' && {
+              pointerEvents: 'none',
+              opacity: 0,
+            }),
+          })}
+        >
+          <NavBarItem
+            title="Add components"
+            isSelected={activeTab === 'add'}
+            icon={<AddIcon size="large" outline />}
+            onClickHandler={() => selectActiveTab('add')}
+          />
+
+          <NavBarItem
+            title="Navigator"
+            isSelected={activeTab === 'nav'}
+            icon={<MenuIcon size="large" outline />}
+            onClickHandler={() => selectActiveTab('nav')}
+          />
+        </Menu>
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            minWidth: '12rem',
+            minWidth: '22.85rem',
             transition: 'opacity 0.2s',
             ...(mode === 'use' && {
               pointerEvents: 'none',
@@ -723,32 +469,45 @@ export const Designer: React.FunctionComponent = () => {
             }),
           }}
         >
-          <List style={{ overflowY: 'auto' }} onDragStart={handleDragStart} />
-          <div role="complementary" aria-label="Component tree">
-            {jsonTree?.props?.children?.length > 0 ? (
-              <>
-                <Divider styles={{ margin: '0.5rem' }} />
-                <ComponentTree
-                  tree={jsonTree}
-                  selectedComponent={selectedComponent}
-                  onSelectComponent={handleSelectComponent}
-                  onCloneComponent={handleCloneComponent}
-                  onMoveComponent={handleMoveComponent}
-                  onDeleteComponent={handleDeleteComponent}
-                  onAddComponent={handleOpenAddComponentDialog}
-                />
-              </>
-            ) : (
-              <Button
-                text
-                content="Insert first component"
-                fluid
-                onClick={() => handleOpenAddComponentDialog('', 'first')}
-              />
-            )}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0 10px 0 20px',
+              borderBottom: '1px solid #E1DFDD',
+            }}
+          >
+            <Header as="h2" style={{ fontSize: '16px', fontWeight: 'bold' }}>
+              {activeTab === 'add' ? 'Add components' : 'Navigator'}
+            </Header>
           </div>
+          {activeTab === 'add' && (
+            <div>
+              <List style={{ overflowY: 'auto' }} onDragStart={handleDragStart} />
+            </div>
+          )}
+          {activeTab === 'nav' && (
+            <div>
+              {(!jsonTree?.props?.children || jsonTree?.props?.children?.length === 0) && (
+                <Button
+                  text
+                  content="Insert first component"
+                  fluid
+                  onClick={() => handleOpenAddComponentDialog('', 'first')}
+                />
+              )}
+              <ComponentTree
+                tree={jsonTree}
+                selectedComponent={selectedComponent}
+                onSelectComponent={handleSelectComponent}
+                onCloneComponent={handleCloneComponent}
+                onMoveComponent={handleMoveComponent}
+                onDeleteSelectedComponent={handleDeleteSelectedComponent}
+                onAddComponent={handleOpenAddComponentDialog}
+              />
+            </div>
+          )}
         </div>
-
         <div
           style={{
             display: 'flex',
@@ -768,10 +527,10 @@ export const Designer: React.FunctionComponent = () => {
             <BrowserWindow
               showNavBar={false}
               headerItems={[
-                <div style={{ marginLeft: 10, lineHeight: 1 }}>
-                  {mode === 'use' && <Text error>{canvasMessage}</Text>}
+                <div key="headerMessage" style={{ marginLeft: 10 }}>
+                  {mode === 'use' && <Text error>{headerMessage}</Text>}
                 </div>,
-                <div style={{ display: 'flex', alignItems: 'baseline', marginLeft: 'auto' }}>
+                <div key="headrTools" style={{ display: 'flex', alignItems: 'baseline', marginLeft: 'auto' }}>
                   {jsonTreeOrigin === 'url' && (
                     <>
                       <Text error>You are working from a shared URL, no changes are saved!</Text>
@@ -780,57 +539,75 @@ export const Designer: React.FunctionComponent = () => {
                       </Button>
                     </>
                   )}
-                  <Button.Group>
-                    {jsonTreeOrigin === 'store' && <GetShareableLink getShareableLink={getShareableLink} />}
-                    &emsp;
-                    {jsonTreeOrigin === 'store' && (
-                      <Button
-                        content="Download"
-                        icon={<DownloadIcon />}
-                        as="a"
-                        href={`data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(jsonTree))}`}
-                        download="jsonTree.json"
-                      />
-                    )}
-                  </Button.Group>
+                  {jsonTreeOrigin === 'store' && <GetShareableLink getShareableLink={getShareableLink} />}
+                  <CodeSandboxExporter
+                    exampleCode={codeSandboxData.code}
+                    exampleLanguage="js"
+                    exampleName="uibuilder"
+                    imports={codeSandboxData.imports}
+                  >
+                    {(state, onCodeSandboxClick) => {
+                      const codeSandboxContent =
+                        state === CodeSandboxState.Default
+                          ? 'CodeSandbox'
+                          : state === CodeSandboxState.Loading
+                          ? 'Exporting...'
+                          : 'Click to open';
+
+                      const codeSandboxIcon = state === CodeSandboxState.Default ? <FilesCodeIcon /> : <AcceptIcon />;
+
+                      return (
+                        <Button
+                          loading={state === CodeSandboxState.Loading}
+                          styles={{ marginTop: 'auto', marginLeft: '0.7rem' }}
+                          onClick={onCodeSandboxClick}
+                          icon={codeSandboxIcon}
+                          content={codeSandboxContent}
+                        />
+                      );
+                    }}
+                  </CodeSandboxExporter>
                 </div>,
               ]}
               style={{
                 flex: 1,
-                margin: '1rem',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                transition: 'box-shadow 0.5s',
               }}
             >
               <ErrorBoundary code={code} jsonTree={jsonTree}>
                 <Canvas
-                  mode={mode}
-                  enabledVirtualCursor={enabledVirtualCursor}
                   draggingElement={draggingElement}
                   isExpanding={isExpanding}
                   isSelecting={isSelecting || !!draggingElement}
                   onMouseMove={handleDrag}
                   onMouseUp={handleCanvasMouseUp}
+                  onKeyDown={handleKeyDown}
                   onSelectComponent={handleSelectComponent}
                   onDropPositionChange={handleDropPositionChange}
                   jsonTree={jsonTree}
                   selectedComponent={selectedComponent}
                   onCloneComponent={handleCloneComponent}
                   onMoveComponent={handleMoveComponent}
-                  onDeleteComponent={handleDeleteComponent}
+                  onDeleteSelectedComponent={handleDeleteSelectedComponent}
                   onGoToParentComponent={handleGoToParentComponent}
-                  onMessage={handleCanvasMessage}
+                  enabledVirtualCursor={enabledVirtualCursor}
                   role="main"
-                  accessibilityErrors={accessibilityErrors}
-                  onAccessibilityErrorsChanged={handleAccessibilityErrors}
+                  inUseMode={mode === 'use'}
+                  setHeaderMessage={setHeaderMessage}
                 />
               </ErrorBoundary>
             </BrowserWindow>
+
             {(showCode || showJSONTree) && (
               <div style={{ flex: '0 0 auto', maxHeight: '35vh', overflow: 'auto' }}>
                 {showCode && (
                   <div role="complementary" aria-label="Code editor">
-                    <Editor mode="jsx" height="auto" value={code} onChange={handleSourceCodeChange} />
+                    <React.Suspense fallback={<div>Loading...</div>}>
+                      <CodeEditor
+                        code={code}
+                        onCodeChange={handleSourceCodeChange}
+                        onCodeError={handleSourceCodeError}
+                      />
+                    </React.Suspense>
                     {codeError && (
                       <pre
                         style={{
@@ -864,13 +641,6 @@ export const Designer: React.FunctionComponent = () => {
                 )}
               </div>
             )}
-            {showAccSpec && (
-              <div style={{ flex: 1, padding: '1rem', color: '#543', background: '#ddd' }}>
-                <h3 style={{ margin: 0 }}>Accessibility specification</h3>
-                <Button content="Generate" onClick={generateAccSpec} />
-                {tableOfComponents()}
-              </div>
-            )}
           </div>
         </div>
 
@@ -890,32 +660,12 @@ export const Designer: React.FunctionComponent = () => {
             }}
           >
             <Description selectedJSONTreeElement={selectedJSONTreeElement} componentInfo={selectedComponentInfo} />
-
-            {accessibilityErrors[selectedComponent.uuid] && (
-              <div
-                style={{
-                  background: '#e3404022',
-                }}
-              >
-                <h4>
-                  <ErrorIcon style={{ width: '1em', height: '1em' }} />{' '}
-                  {_.keys(accessibilityErrors[selectedComponent.uuid]).length} accessibility errors
-                </h4>
-                <ul>
-                  {_.keys(accessibilityErrors[selectedComponent.uuid]).map(errorId => (
-                    <li>
-                      <strong>{accessibilityErrors[selectedComponent.uuid][errorId].source}</strong>&nbsp;
-                      {accessibilityErrors[selectedComponent.uuid][errorId].error}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* <Anatomy componentInfo={selectedComponentInfo} /> */}
+            {!!axeErrors.length && <ErrorPanel axeErrors={axeErrors} />}
             {selectedJSONTreeElement && (
               <Knobs
                 onPropChange={handlePropChange}
+                onPropDelete={handlePropDelete}
                 info={selectedComponentInfo}
                 jsonTreeElement={selectedJSONTreeElement}
               />

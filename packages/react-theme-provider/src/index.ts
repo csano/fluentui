@@ -1,8 +1,3 @@
-import './version';
+export * from './ThemeProvider';
 
-export { ThemeProvider, ThemeProviderProps } from './ThemeProvider';
-export { useTheme } from './useTheme';
-export * from './types';
-export * from './getStyleFromPropsAndOptions';
-export * from './mergeThemes';
-export * from './tokensToStyleObject';
+export { useTheme } from '@fluentui/react-shared-contexts';

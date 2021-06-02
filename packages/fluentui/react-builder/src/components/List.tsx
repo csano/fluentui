@@ -1,12 +1,10 @@
 import * as _ from 'lodash';
 import * as React from 'react';
-import { Box, Menu, Input, Tree, tabListBehavior } from '@fluentui/react-northstar';
+import { Box, Input, Tree, Tooltip } from '@fluentui/react-northstar';
 import { SearchIcon, TriangleDownIcon, TriangleEndIcon } from '@fluentui/react-icons-northstar';
 import { ComponentInfo } from '../componentInfo/types';
 import { componentInfoContext } from '../componentInfo/componentInfoContext';
 import { EXCLUDED_COMPONENTS, COMPONENT_GROUP } from '../config';
-
-export type ListDisplayModes = 'Display Name' | 'Rendered';
 
 export type ListProps = {
   onDragStart?: (componentInfo: ComponentInfo, e: MouseEvent) => void;
@@ -14,10 +12,9 @@ export type ListProps = {
 };
 
 export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style }) => {
-  const [displayMode, setDisplayMode] = React.useState<ListDisplayModes>('Display Name');
   const [filter, setFilter] = React.useState<string>('');
 
-  const filterRegexp = new RegExp(filter, 'i');
+  const filterRegexp = React.useMemo(() => new RegExp(filter, 'i'), [filter]);
 
   const handleMouseDown = React.useCallback(
     componentInfo => e => {
@@ -40,10 +37,10 @@ export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style })
 
   const titleComponent = (Component, { content, expanded, ...rest }) => {
     return (
-      <div {...rest}>
+      <Component {...rest}>
         {expanded ? <TriangleDownIcon /> : <TriangleEndIcon />}
         {content}
-      </div>
+      </Component>
     );
   };
 
@@ -64,10 +61,11 @@ export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style })
                 id: info.displayName,
                 title: (
                   <Box
+                    as="span"
                     key={info.displayName}
                     onMouseDown={handleMouseDown(info)}
                     styles={{
-                      padding: '0.25em 0.75em',
+                      padding: '0.25rem 0.75rem',
                       cursor: 'pointer',
                       ':hover': {
                         background: '#ddd',
@@ -77,23 +75,14 @@ export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style })
                       marginLeft: '2px',
                     }}
                   >
-                    {displayMode === 'Rendered' && (
-                      <div style={{ position: 'relative' }}>
-                        <div style={{ fontWeight: 'bold', opacity: 0.5 }}>{info.displayName}</div>
-                        <div style={{ padding: '0.5rem', pointerEvents: 'none' }}>
-                          {/* FIXME {React.createElement(resolveComponent(info.displayName), resolveDraggingProps(info.displayName))} */}
-                        </div>
-                      </div>
-                    )}
-
-                    {displayMode === 'Display Name' && info.displayName}
+                    {info.displayName}
                   </Box>
                 ),
               })),
           },
         };
       }, {}),
-    [displayMode, handleMouseDown, supportedComponents],
+    [handleMouseDown, supportedComponents],
   );
   const treeItems = Object.values(treeObj).filter(treeItem => treeItem.items.length > 0);
 
@@ -103,32 +92,9 @@ export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style })
       aria-label="Available components"
       style={{
         ...style,
-        boxShadow: '1px 0px 3px rgba(0, 0, 0, 0.2)',
         userSelect: 'none',
       }}
     >
-      <Menu
-        accessibility={tabListBehavior}
-        underlined
-        fluid
-        styles={{ padding: '0.5em 0.5em 0 0.5em' }}
-        items={[
-          {
-            key: 'name',
-            content: 'Name',
-            'data-display-mode': 'Display Name',
-          },
-          {
-            key: 'preview',
-            content: 'Preview',
-            'data-display-mode': 'Rendered',
-          },
-        ]}
-        defaultActiveIndex={0}
-        onItemClick={(e, props) => {
-          setDisplayMode(props['data-display-mode']);
-        }}
-      />
       <Input
         fluid
         icon={<SearchIcon />}
@@ -141,16 +107,25 @@ export const List: React.FunctionComponent<ListProps> = ({ onDragStart, style })
       {unsupportedComponents
         .filter(info => info.displayName.match(filterRegexp))
         .map(info => (
-          <Box
+          <Tooltip
+            pointing
+            position="after"
+            align="center"
             key={info.displayName}
-            styles={{
-              padding: '0.2em 0.5em',
-              background: '#eee',
-              color: '#888',
-            }}
-          >
-            {info.displayName}
-          </Box>
+            trigger={
+              <Box
+                key={info.displayName}
+                styles={{
+                  padding: '0.2em 0.5em',
+                  background: '#eee',
+                  color: '#888',
+                }}
+              >
+                {info.displayName}
+              </Box>
+            }
+            content={info.docblock.description + info.docblock.tags}
+          />
         ))}
     </div>
   );

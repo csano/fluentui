@@ -19,6 +19,7 @@
 
 ### Props
 
+<!-- prettier-ignore-start -->
 | Prop Name        | Type                                             | Description                                                                                        |
 | ---------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | dayNames         | string[]                                         | An array of localized strings for the full names of days.                                          |
@@ -31,7 +32,7 @@
 | maxDate          | Date                                             | If set the `Calendar` will not allow navigation to or selection of a date earlier than this value. |
 | minDate          | Date                                             | If set the `Calendar` will not allow navigation to or selection of a date later than this value.   |
 | months           | string[]                                         | An array of localized strings for the full names of months.                                        |
-| onChange         | (event: React.FormEvent<HTMLInputElement         | HTMLTextAreaElement>, newValue?: string) => void                                                   | Callback for when the input value changes. |
+| onChange         | `(event: React.FormEvent<HTMLInputElement \| HTMLTextAreaElement>, newValue?: string) => void` | Callback for when the input value changes.           |
 | open             | boolean                                          | Open `Calendar` component                                                                          |
 | parse            | (date: string) => Date                           | Parse date from string representation into `Date`.                                                 |
 | placeholder      | string                                           | Placeholder for the input                                                                          |
@@ -40,7 +41,8 @@
 | selectedDate     | Date                                             | Date shown as selected in the `input`.                                                             |
 | shortDays        | string[]                                         | An array of localized strings for the short names of days.                                         |
 | shortMonths      | string[]                                         | An array of localized strings for the short names of months                                        |
-| type             | enum`day|month|year`                             | Type of the `Calendar` to be shown.                                                                |
+| type             | enum `day\|month\|year`                          | Type of the `Calendar` to be shown.                                                                |
+<!-- prettier-ignore-end -->
 
 #### Notes
 
@@ -62,7 +64,7 @@ Consider having a single property to be a dictionary containing all needed local
 
 #### Internal representation
 
-```typescript=
+```tsx
 const Datepicker = () => (
   <>
     <InputBlock />
@@ -570,3 +572,14 @@ _TBD_
 Complexity and number of internal components might affect the performance.
 
 Caching might help with the re-renders, but we need to think about first render.
+
+## UI Fabric Datepicker vs. Fluent UI Datepicker
+
+In the summer of 2020, the first version of FluentUI datepicker has been implemented.
+As the rest of the document suggests, the implementation has been inspired by both the industry as well as FabricUI and the current Teams implementation.
+
+These are some of the notable FluentUI vs. Fabric differences:
+
+- Datepicker with disabled input does not open on focus in FluentUI.
+- Placeholder has a default value in FluentUI.
+- Datepicker navigates to disabled dates in FluentUI.

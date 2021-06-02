@@ -8,6 +8,10 @@ export * from './Button/buttonGroupBehavior';
 export * from './Button/buttonGroupBehavior';
 export * from './Button/toggleButtonBehavior';
 
+export * from './Breadcrumb/breadcrumbBehavior';
+export * from './Breadcrumb/breadcrumbItemBehavior';
+export * from './Breadcrumb/breadcrumbDividerBehavior';
+
 export * from './Dropdown/dropdownSelectedItemBehavior';
 export * from './Dropdown/dropdownSelectedItemBehavior';
 
@@ -41,7 +45,9 @@ export * from './Toolbar/menuItemAsToolbarButtonBehavior';
 export * from './Toolbar/toolbarBehavior';
 export * from './Toolbar/toolbarItemBehavior';
 export * from './Toolbar/toolbarMenuItemCheckboxBehavior';
+export * from './Toolbar/toolbarMenuDividerBehavior';
 export * from './Toolbar/toolbarMenuRadioGroupBehavior';
+export * from './Toolbar/toolbarMenuRadioGroupWrapperBehavior';
 export * from './Toolbar/toolbarRadioGroupBehavior';
 export * from './Toolbar/toolbarRadioGroupItemBehavior';
 
@@ -58,11 +64,6 @@ export * from './Form/formFieldBehavior';
 export * from './Grid/gridBehavior';
 export { gridHorizontalBehavior } from './Grid/gridHorizontalBehavior';
 
-export * from './HierarchicalTree/hierarchicalTreeBehavior';
-export * from './HierarchicalTree/hierarchicalTreeItemBehavior';
-export * from './HierarchicalTree/hierarchicalTreeTitleBehavior';
-export { hierarchicalSubtreeBehavior } from './HierarchicalTree/hierarchicalSubtreeBehavior';
-
 export * from './Dialog/dialogBehavior';
 
 export * from './Status/statusBehavior';
@@ -78,6 +79,12 @@ export * from './Checkbox/checkboxBehavior';
 export * from './Tooltip/tooltipAsDescriptionBehavior';
 export { tooltipAsLabelBehavior } from './Tooltip/tooltipAsLabelBehavior';
 
+export * from './Pill/pillGroupBehavior';
+export * from './Pill/pillBehavior';
+export * from './Pill/pillIconBehavior';
+export * from './Pill/pillImageBehavior';
+export * from './Pill/pillActionBehavior';
+
 export * from './Slider/sliderBehavior';
 
 export * from './MenuButton/menuButtonBehavior';
@@ -90,6 +97,9 @@ export * from './Tree/treeTitleBehavior';
 export { treeAsListBehavior } from './Tree/treeAsListBehavior';
 export { treeItemAsListItemBehavior } from './Tree/treeItemAsListItemBehavior';
 export { treeTitleAsListItemTitleBehavior } from './Tree/treeTitleAsListItemTitleBehavior';
+export { treeAsListboxBehavior } from './Tree/treeAsListboxBehavior';
+export { treeItemAsOptionBehavior } from './Tree/treeItemAsOptionBehavior';
+export { treeTitleAsOptionBehavior } from './Tree/treeTitleAsOptionBehavior';
 
 export * from './TextArea/textAreaBehavior';
 
@@ -120,6 +130,9 @@ export * from './Video/videoBehavior';
 export { hiddenComponentBehavior } from './Common/hiddenComponentBehavior';
 
 export * from './Datepicker/datepickerBehavior';
-
 export * from './Datepicker/datepickerCalendarBehavior';
 export * from './Datepicker/datepickerCalendarHeaderBehavior';
+export * from './Datepicker/datepickerCalendarGridBehavior';
+export * from './Datepicker/datepickerCalendarGridRowBehavior';
+export * from './Datepicker/datepickerCalendarCellBehavior';
+export * from './Datepicker/datepickerCalendarCellButtonBehavior';

@@ -1,159 +1,213 @@
 import * as React from 'react';
-import { Button, Checkbox, Image, RadioGroup, RadioGroupItemProps, EyeIcon } from '@fluentui/react-northstar';
+import {
+  Box,
+  Button,
+  Image,
+  MenuButton,
+  Toolbar as FUIToolbar,
+  ToolbarItemProps,
+  Tooltip,
+} from '@fluentui/react-northstar';
 import { DesignerMode } from './types';
-import { OpenOutsideIcon, TrashCanIcon, FilesUploadIcon } from '@fluentui/react-icons-northstar';
+import {
+  CodeSnippetIcon,
+  OpenOutsideIcon,
+  TrashCanIcon,
+  UndoIcon,
+  RedoIcon,
+  TranslationIcon,
+} from '@fluentui/react-icons-northstar';
 
 export type ToolbarProps = {
   isExpanding: boolean;
   isSelecting: boolean;
+  canRedo: boolean;
+  canUndo: boolean;
   onModeChange: (mode: DesignerMode) => void;
   onReset: () => void;
-  showAxeErrors: () => void;
-  onUpload: (jsonTree: {}) => void;
+  onUndo: () => void;
+  onRedo: () => void;
   onShowCodeChange: (showCode: boolean) => void;
   onShowJSONTreeChange: (showJSONTree: boolean) => void;
-  onShowAccSpecChange: (showAccSpec: boolean) => void;
-  eenabledVirtualCursor: boolean;
-  onEnableVirtualCursor: (enableVirtualCursor: boolean) => void;
   mode: DesignerMode;
   showCode: boolean;
   showJSONTree: boolean;
-  showAccSpec: boolean;
+  enabledVirtualCursor: boolean;
+  onEnableVirtualCursor: (enabledVirtualCursor: boolean) => void;
   style?: React.CSSProperties;
 };
 
 export const Toolbar: React.FunctionComponent<ToolbarProps> = ({
   isExpanding,
   isSelecting,
+  canRedo,
+  canUndo,
   onModeChange,
   onReset,
-  showAxeErrors,
-  onUpload,
+  onUndo,
+  onRedo,
   onShowCodeChange,
   onShowJSONTreeChange,
   mode,
   showCode,
   showJSONTree,
-  style,
-  eenabledVirtualCursor,
+  enabledVirtualCursor,
   onEnableVirtualCursor,
-  onShowAccSpecChange,
-  showAccSpec,
+  style,
 }) => {
-  const uploadInputRef = React.useRef<HTMLInputElement>();
+  const [showVcInfo, setShowVcInfo] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
   return (
-    <div
-      style={{
+    <Box
+      styles={({ theme }) => ({
         display: 'flex',
         padding: '0 1rem',
         alignItems: 'center',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.25)',
+        borderBottom: `1px solid ${theme.siteVariables.colorScheme.default.border2}`,
+        background: theme.siteVariables.colorScheme.default.background1,
         ...style,
-      }}
+      })}
     >
-      <Image styles={{ height: '1.5rem', marginRight: '0.25rem' }} src={`public/images/fluent-ui-logo.png`} />
-      <div style={{ position: 'relative', width: '8em', fontSize: '18px', lineHeight: 1 }}>
-        FluentUI
-        <div style={{ position: 'absolute', fontSize: '11px', opacity: 0.625 }}>Builder</div>
+      <Image
+        styles={{ height: '1.5rem' }}
+        src="https://fabricweb.azureedge.net/fabric-website/assets/images/fluent-ui-logo.png"
+      />
+      <div style={{ position: 'relative', padding: '0 .8rem', fontSize: '14px', lineHeight: 1, fontWeight: 'bold' }}>
+        FluentUI <span style={{ fontWeight: 'normal' }}>Builder</span>
       </div>
-      <div>
-        <strong id="editor-mode-label">Mode:</strong>
-        &emsp;
-        <RadioGroup
-          aria-labelledby="editor-mode-label"
-          style={{ display: 'inline-block' }}
-          checkedValue={mode}
-          onCheckedValueChange={(e, data: RadioGroupItemProps & { value: DesignerMode }) => {
-            onModeChange(data.value);
-          }}
+      <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+        <FUIToolbar
+          aria-label="Builder toolbar"
           items={[
             {
-              key: 'build',
-              label: 'Build',
-              value: 'build',
+              key: 'mode',
+              children: <b aria-label={`${mode} - change mode`}>{mode.replace(/^\w/, c => c.toUpperCase())}</b>,
+              active: menuOpen,
+              menuOpen,
+              onMenuOpenChange: (_, { menuOpen }) => setMenuOpen(menuOpen),
+              menu: {
+                items: [
+                  {
+                    key: 'build',
+                    content: 'Build',
+                    onClick: () => {
+                      onModeChange('build');
+                      onEnableVirtualCursor(false);
+                    },
+                  },
+                  {
+                    key: 'design',
+                    content: 'Design',
+                    onClick: () => {
+                      onModeChange('design');
+                      onEnableVirtualCursor(false);
+                    },
+                  },
+                  {
+                    key: 'use',
+                    content: 'Use',
+                    onClick: () => {
+                      onModeChange('use');
+                    },
+                  },
+                ],
+              },
             },
             {
-              key: 'design',
-              label: 'Design',
-              value: 'design',
+              key: 'divider-1',
+              kind: 'divider',
             },
             {
-              key: 'use',
-              label: 'Use',
-              value: 'use',
+              icon: <UndoIcon outline={true} />,
+              key: 'undo',
+              // kind: 'toggle',
+              disabled: !canUndo,
+              title: 'Undo',
+              onClick: () => {
+                onUndo();
+              },
             },
+            {
+              icon: <RedoIcon outline={true} />,
+              key: 'redo',
+              // kind: 'toggle',
+              disabled: !canRedo,
+              title: 'Redo',
+              onClick: () => {
+                onRedo();
+              },
+            },
+            {
+              key: 'divider-2',
+              kind: 'divider',
+            },
+            {
+              icon: <TrashCanIcon outline={true} />,
+              key: 'delete',
+              // kind: 'toggle',
+              title: 'Start over',
+              onClick: () => {
+                onReset();
+              },
+            },
+            mode === 'use'
+              ? ({
+                  key: 'screen-reader',
+                  icon: <TranslationIcon outline={true} />,
+                  kind: 'toggle',
+                  active: !!enabledVirtualCursor,
+                  title: 'Screen reader simulation',
+                  onClick: () => {
+                    onEnableVirtualCursor(!enabledVirtualCursor);
+                    setShowVcInfo(true);
+                    setTimeout(() => setShowVcInfo(false), 10000);
+                  },
+                  children: (C, p) => (
+                    <Tooltip
+                      accessibility={null}
+                      trigger={<C {...p} />}
+                      content={<span role="alert">Use Ctrl+, and Ctrl+. to navigate in the canvas</span>}
+                      open={enabledVirtualCursor && showVcInfo}
+                    />
+                  ),
+                } as ToolbarItemProps)
+              : undefined,
           ]}
         />
       </div>
-      &nbsp; &nbsp;
-      <Button
-        text
-        icon={<OpenOutsideIcon />}
-        content="Popout"
-        onClick={() => {
-          window.open(`/builder/maximize${window.location.hash}`, '_blank', 'noopener noreferrer');
-        }}
-      />
       <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-        <Checkbox
-          label="Enable virtual cursor"
-          toggle
-          checked={!!eenabledVirtualCursor}
-          onChange={(e, data) => onEnableVirtualCursor(data.checked)}
-        />
-        &emsp;
-        <Checkbox
-          label="Show Code"
-          toggle
-          checked={!!showCode}
-          onChange={(e, data) => onShowCodeChange(data.checked)}
-        />
-        &emsp;
-        <Checkbox
-          label="Show JSON"
-          toggle
-          checked={!!showJSONTree}
-          onChange={(e, data) => onShowJSONTreeChange(data.checked)}
-        />
-        &emsp;
-        <Checkbox
-          label="Show Acc Spec"
-          toggle
-          checked={!!showAccSpec}
-          onChange={(e, data) => {
-            onShowAccSpecChange(data.checked);
-          }}
-        />
-        &emsp;
-        <input
-          hidden
-          onChange={e => {
-            const fr = new FileReader();
-            console.log();
-            fr.onload = event => {
-              const result = JSON.parse(event.target.result as string);
-              console.log('File content:', event.target.result);
-              console.log(result);
-              onUpload(result);
-            };
-            fr.readAsText(e.target.files[0]);
-          }}
-          type="file"
-          ref={uploadInputRef}
+        <MenuButton
+          trigger={<Button iconOnly icon={<CodeSnippetIcon outline />} aria-label="Show code" />}
+          menu={[
+            {
+              key: 'code',
+              content: 'Show code',
+              onClick: () => {
+                onShowCodeChange(!showCode);
+                if (showJSONTree) onShowJSONTreeChange(!showJSONTree);
+              },
+            },
+            {
+              key: 'json',
+              content: 'Show JSON',
+              onClick: () => {
+                onShowJSONTreeChange(!showJSONTree);
+                if (showCode) onShowCodeChange(!showCode);
+              },
+            },
+          ]}
         />
         <Button
-          text
+          style={{ marginLeft: '.8rem' }}
+          iconOnly
+          icon={<OpenOutsideIcon outline />}
+          aria-label="Popout"
           onClick={() => {
-            uploadInputRef.current.click();
+            window.open(`/builder/maximize${window.location.hash}`, '_blank', 'noopener noreferrer');
           }}
-          icon={<FilesUploadIcon />}
-          content="Upload"
         />
-        &emsp;
-        <Button text onClick={showAxeErrors} icon={<EyeIcon />} content="Accessibility check" />
-        &emsp;
-        <Button text onClick={onReset} icon={<TrashCanIcon />} content="Start Over" />
       </div>
-    </div>
+    </Box>
   );
 };

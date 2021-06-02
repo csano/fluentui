@@ -19,6 +19,8 @@ import { AttachmentDescriptionStylesProps } from '../../components/Attachment/At
 import { AttachmentHeaderStylesProps } from '../../components/Attachment/AttachmentHeader';
 import { AttachmentIconStylesProps } from '../../components/Attachment/AttachmentIcon';
 import { AvatarStylesProps } from '../../components/Avatar/Avatar';
+import { AvatarImageStylesProps } from '../../components/Avatar/AvatarImage';
+import { AvatarStatusStylesProps } from '../../components/Avatar/AvatarStatus';
 import { BoxStylesProps } from '../../components/Box/Box';
 import { ButtonGroupProps } from '../../components/Button/ButtonGroup';
 import { ButtonStylesProps } from '../../components/Button/Button';
@@ -72,15 +74,13 @@ import { ToolbarDividerStylesProps } from '../../components/Toolbar/ToolbarDivid
 import { ToolbarItemStylesProps } from '../../components/Toolbar/ToolbarItem';
 import { ToolbarCustomItemStylesProps } from '../../components/Toolbar/ToolbarCustomItem';
 import { ToolbarMenuItemStylesProps } from '../../components/Toolbar/ToolbarMenuItem';
+import { ToolbarMenuItemContentStylesProps } from '../../components/Toolbar/ToolbarMenuItemContent';
 import { ToolbarMenuDividerStylesProps } from '../../components/Toolbar/ToolbarMenuDivider';
 import { ToolbarMenuRadioGroupStylesProps } from '../../components/Toolbar/ToolbarMenuRadioGroup';
 import { ToolbarMenuStylesProps } from '../../components/Toolbar/ToolbarMenu';
 import { ToolbarStylesProps } from '../../components/Toolbar/Toolbar';
 import { ToolbarRadioGroupStylesProps } from '../../components/Toolbar/ToolbarRadioGroup';
 import { TooltipContentStylesProps } from '../../components/Tooltip/TooltipContent';
-import { HierarchicalTreeItemProps } from '../../components/HierarchicalTree/HierarchicalTreeItem';
-import { HierarchicalTreeProps } from '../../components/HierarchicalTree/HierarchicalTree';
-import { HierarchicalTreeTitleProps } from '../../components/HierarchicalTree/HierarchicalTreeTitle';
 import { VideoStylesProps } from '../../components/Video/Video';
 import { TreeItemStylesProps } from '../../components/Tree/TreeItem';
 import { TreeTitleStylesProps } from '../../components/Tree/TreeTitle';
@@ -99,6 +99,19 @@ import { SplitButtonStylesProps } from '../../components/SplitButton/SplitButton
 import { CarouselNavigationStylesProps } from '../../components/Carousel/CarouselNavigation';
 import { CarouselItemStylesProps } from '../../components/Carousel/CarouselItem';
 import { CarouselStylesProps } from '../../components/Carousel/Carousel';
+import { SkeletonStylesProps } from '../../components/Skeleton/Skeleton';
+import { SkeletonTextStylesProps } from '../../components/Skeleton/SkeletonText';
+import { SkeletonShapeStylesProps } from '../../components/Skeleton/SkeletonShape';
+import { SkeletonLineStylesProps } from '../../components/Skeleton/SkeletonLine';
+import { SkeletonAvatarStylesProps } from '../../components/Skeleton/SkeletonAvatar';
+import { SkeletonInputStylesProps } from '../../components/Skeleton/SkeletonInput';
+import { SplitButtonToggleStylesProps } from '../../components/SplitButton/SplitButtonToggle';
+import { AttachmentBodyStylesProps } from '../../components/Attachment/AttachmentBody';
+import { PillStylesProps } from '../../components/Pill/Pill';
+import { PillContentStylesProps } from '../../components/Pill/PillContent';
+import { PillGroupStylesProps } from '../../components/Pill/PillGroup';
+import { PillImageStylesProps } from '../../components/Pill/PillImage';
+import { PillIconStylesProps } from '../../components/Pill/PillIcon';
 
 export type TeamsThemeStylesProps = {
   Accordion: AccordionStylesProps;
@@ -108,10 +121,13 @@ export type TeamsThemeStylesProps = {
   Animation: AnimationProps;
   Attachment: AttachmentProps;
   AttachmentAction: AttachmentActionStylesProps;
+  AttachmentBody: AttachmentBodyStylesProps;
   AttachmentDescription: AttachmentDescriptionStylesProps;
   AttachmentHeader: AttachmentHeaderStylesProps;
   AttachmentIcon: AttachmentIconStylesProps;
   Avatar: AvatarStylesProps;
+  AvatarImage: AvatarImageStylesProps;
+  AvatarStatus: AvatarStatusStylesProps;
   Button: ButtonStylesProps;
   Box: BoxStylesProps;
   ButtonContent: ButtonContentStylesProps;
@@ -155,6 +171,11 @@ export type TeamsThemeStylesProps = {
   MenuItemContent: MenuItemContentStylesProps;
   MenuItemWrapper: MenuItemWrapperStylesProps;
   MenuDivider: MenuDividerStylesProps;
+  Pill: PillStylesProps;
+  PillGroup: PillGroupStylesProps;
+  PillContent: PillContentStylesProps;
+  PillIcon: PillIconStylesProps;
+  PillImage: PillImageStylesProps;
   Portal: PortalProps;
   PopupContent: PopupContentStylesProps;
   RadioGroup: RadioGroupProps;
@@ -163,7 +184,14 @@ export type TeamsThemeStylesProps = {
   ReactionGroup: ReactionGroupStylesProps;
   Segment: SegmentStylesProps;
   Slider: SliderStylesProps;
+  Skeleton: SkeletonStylesProps;
+  SkeletonLine: SkeletonLineStylesProps;
+  SkeletonShape: SkeletonShapeStylesProps;
+  SkeletonAvatar: SkeletonAvatarStylesProps;
+  SkeletonInput: SkeletonInputStylesProps;
+  SkeletonText: SkeletonTextStylesProps;
   SplitButton: SplitButtonStylesProps;
+  SplitButtonToggle: SplitButtonToggleStylesProps;
   Status: StatusStylesProps;
   Toolbar: ToolbarStylesProps;
   ToolbarCustomItem: ToolbarCustomItemStylesProps;
@@ -172,6 +200,7 @@ export type TeamsThemeStylesProps = {
   ToolbarRadioGroup: ToolbarRadioGroupStylesProps;
   ToolbarMenu: ToolbarMenuStylesProps;
   ToolbarMenuItem: ToolbarMenuItemStylesProps;
+  ToolbarMenuItemContent: ToolbarMenuItemContentStylesProps;
   ToolbarMenuDivider: ToolbarMenuDividerStylesProps;
   ToolbarMenuRadioGroup: ToolbarMenuRadioGroupStylesProps;
   TooltipContent: TooltipContentStylesProps;
@@ -179,9 +208,6 @@ export type TeamsThemeStylesProps = {
   TextArea: TextAreaStylesProps;
   TreeItem: TreeItemStylesProps;
   TreeTitle: TreeTitleStylesProps;
-  HierarchicalTree: HierarchicalTreeProps;
-  HierarchicalTreeItem: HierarchicalTreeItemProps;
-  HierarchicalTreeTitle: HierarchicalTreeTitleProps;
   Video: VideoStylesProps;
   Table: TableStylesProps;
   TableRow: TableRowStylesProps;

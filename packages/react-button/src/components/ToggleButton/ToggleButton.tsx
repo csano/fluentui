@@ -1,9 +1,32 @@
-import { compose, createClassResolver } from '@fluentui/react-compose';
-import { ToggleButtonBase } from './ToggleButtonBase';
-import { ToggleButtonProps } from './ToggleButton.types';
-import * as classes from './ToggleButton.scss';
+import * as React from 'react';
+import { ToggleButtonProps, ToggleButtonStyleSelectors } from './ToggleButton.types';
+import { renderToggleButton } from './renderToggleButton';
+import { useToggleButton } from './useToggleButton';
+import { useToggleButtonStyles } from './useToggleButtonStyles';
 
-export const ToggleButton = compose<'button', {}, {}, ToggleButtonProps, ToggleButtonProps>(ToggleButtonBase, {
-  classes: createClassResolver(classes),
-  displayName: 'ToggleButton',
+/**
+ * Define a styled ToggleButton, using the `useToggleButton` hook.
+ * {@docCategory Button}
+ */
+export const ToggleButton = React.forwardRef<HTMLElement, ToggleButtonProps>((props, ref) => {
+  const state = useToggleButton(props, ref);
+
+  const receivedChildren = !!state.children?.children;
+  const receivedIcon = !!state.icon?.children;
+
+  const styleSelectors: ToggleButtonStyleSelectors = {
+    checked: state.checked,
+    disabled: state.disabled,
+    iconOnly: receivedIcon && !receivedChildren,
+    primary: state.primary,
+    size: state.size,
+    subtle: state.subtle,
+    transparent: state.transparent,
+  };
+
+  useToggleButtonStyles(state, styleSelectors);
+
+  return renderToggleButton(state);
 });
+
+ToggleButton.displayName = 'ToggleButton';

@@ -5,7 +5,8 @@ import { componentInfoContext } from '../componentInfo/componentInfoContext';
 export const InsertComponent = ({ onComponentAdded, onDismiss }) => {
   const [selectedComponent, setSelectedComponent] = React.useState('');
   const confirm = React.useCallback(() => {
-    onComponentAdded && onComponentAdded(selectedComponent);
+    const component = componentInfoContext.byDisplayName[selectedComponent];
+    onComponentAdded && component && onComponentAdded(component.displayName, component.moduleName);
   }, [onComponentAdded, selectedComponent]);
 
   const dismiss = React.useCallback(() => {
@@ -22,6 +23,8 @@ export const InsertComponent = ({ onComponentAdded, onDismiss }) => {
       open={true}
       content={
         <Dropdown
+          search
+          highlightFirstItemOnOpen
           placeholder="Choose component"
           items={items}
           onChange={(e, data) => setSelectedComponent(String(data.value))}

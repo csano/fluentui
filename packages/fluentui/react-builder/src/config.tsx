@@ -1,19 +1,25 @@
 import * as React from 'react';
 import { isElement } from 'react-is';
 import * as _ from 'lodash';
-
 import * as FUI from '@fluentui/react-northstar';
 import * as FUIIcons from '@fluentui/react-icons-northstar';
 
 import { JSONTreeElement } from './components/types';
 import { getUUID } from './utils/getUUID';
+import { CodeSandboxImport } from '@fluentui/docs-components';
 
 type FiberNavigator = FUI.FiberNavigator;
+
+const projectPackageJson = require('@fluentui/react-northstar/package.json');
+const sandboxPackageJson = require('@fluentui/code-sandbox/package.json');
+const docsComponentsPackageJson = require('@fluentui/docs-components/package.json');
 
 export const EXCLUDED_COMPONENTS = ['Animation', 'Debug', 'Design', 'FocusZone', 'Portal', 'Provider', 'Ref'];
 
 export const COMPONENT_GROUP = {
-  Surfaces: ['Popup', 'Dialog'],
+  Actionable: ['Button', 'MenuButton', 'SplitButton', 'Menu', 'Toolbar'],
+  Containers: ['Card', 'Carousel', 'Accordion', 'Segment', 'List', 'Tree', 'HierarchicalTree'],
+  Layouts: ['Box', 'Flex', 'Grid', 'Layout', 'Table', 'ItemLayout'],
   Content: [
     'Text',
     'Image',
@@ -32,11 +38,10 @@ export const COMPONENT_GROUP = {
     'Status',
     'Tooltip',
     'Video',
+    'Skeleton',
   ],
-  Layouts: ['Box', 'Flex', 'Grid', 'Layout', 'Table', 'ItemLayout'],
   Forms: ['Input', 'Dropdown', 'Form', 'Checkbox', 'RadioGroup', 'Slider', 'TextArea'],
-  Actionable: ['Button', 'MenuButton', 'SplitButton', 'Menu', 'Toolbar'],
-  Containers: ['Card', 'Carousel', 'Accordion', 'Segment', 'List', 'Tree', 'HierarchicalTree'],
+  Surfaces: ['Popup', 'Dialog'],
 };
 
 export const DRAGGING_ELEMENTS = {
@@ -135,16 +140,16 @@ export const DRAGGING_ELEMENTS = {
         {
           gutter: (
             <FUI.Avatar
-              image="public/images/avatar/small/ade.jpg"
+              image="public/images/avatar/RobinCounts.jpg"
               status={{ color: 'green', icon: <FUIIcons.AcceptIcon /> }}
             />
           ),
-          message: <FUI.Chat.Message content="Hi!" author="Jane Doe" timestamp="Yesterday, 10:15 PM" />,
+          message: <FUI.Chat.Message content="Hi!" author="Robin Counts" timestamp="Yesterday, 10:15 PM" />,
           attached: 'top',
           key: 'message-id-4',
         },
         {
-          message: <FUI.Chat.Message content="Hello!" author="John Doe" timestamp="Yesterday, 10:15 PM" mine />,
+          message: <FUI.Chat.Message content="Hello!" author="Cecil Folk" timestamp="Yesterday, 10:15 PM" mine />,
           contentPosition: 'end',
           attached: true,
           key: 'message-id-2',
@@ -231,8 +236,6 @@ export const DRAGGING_ELEMENTS = {
     props: { content: 'Header', description: 'Description' } as FUI.HeaderProps,
   },
 
-  // HierarchicalTree: { props: { content: 'HierarchicalTree' } as FUI.HierarchicalTreeProps },
-
   // Icon: { props: { name: 'like' } as FUI.IconProps },
 
   Image: {
@@ -262,23 +265,23 @@ export const DRAGGING_ELEMENTS = {
     props: {
       items: [
         {
-          key: 'irving',
-          media: <FUI.Image src="public/images/avatar/small/matt.jpg" avatar />,
-          header: 'Irving Kuhic',
+          key: 'robert',
+          media: <FUI.Image src="public/images/avatar/RobertTolbert.jpg" avatar />,
+          header: 'Robert Tolbert',
           headerMedia: '7:26:56 AM',
           content: 'Program the sensor to the SAS alarm through the haptic SQL card!',
         },
         {
-          key: 'skyler',
-          media: <FUI.Image src="public/images/avatar/small/steve.jpg" avatar />,
-          header: 'Skyler Parks',
+          key: 'celeste',
+          media: <FUI.Image src="public/images/avatar/CelesteBurton.jpg" avatar />,
+          header: 'Celeste Burton',
           headerMedia: '11:30:17 PM',
           content: 'Use the online FTP application to input the multi-byte application!',
         },
         {
-          key: 'dante',
-          media: <FUI.Image src="public/images/avatar/small/nom.jpg" avatar />,
-          header: 'Dante Schneider',
+          key: 'cecil',
+          media: <FUI.Image src="public/images/avatar/CecilFolk.jpg" avatar />,
+          header: 'Cecil Folk',
           headerMedia: '5:22:40 PM',
           content: 'The GB pixel is down, navigate the virtual interface!',
         },
@@ -421,6 +424,13 @@ export const resolveComponent = (displayName): React.ElementType => {
 
 // FIXME: breaks for <button>btn</button>
 const toJSONTreeElement = input => {
+  if (input?.as && _.isPlainObject(input.as)) {
+    return {
+      type: input.as.displayName,
+      props: { ...input, as: undefined },
+      $$typeof: 'Symbol(react.element)',
+    };
+  }
   if (isElement(input)) {
     return {
       $$typeof: 'Symbol(react.element)',
@@ -443,8 +453,9 @@ const toJSONTreeElement = input => {
   return result;
 };
 
-export const resolveDraggingElement: (displayName: string, draggingElements?) => JSONTreeElement = (
+export const resolveDraggingElement: (displayName: string, module: string, draggingElements?) => JSONTreeElement = (
   displayName,
+  module,
   draggingElements = DRAGGING_ELEMENTS,
 ) => {
   const jsonTreeElement = toJSONTreeElement(draggingElements[displayName]);
@@ -452,6 +463,7 @@ export const resolveDraggingElement: (displayName: string, draggingElements?) =>
     uuid: getUUID(),
     $$typeof: 'Symbol(react.element)',
     type: displayName,
+    moduleName: module,
     displayName,
     props: { children: [] },
     ...jsonTreeElement,
@@ -548,6 +560,95 @@ export const renderJSONTreeToJSXElement = (
   //   key: modifiedTree.uuid,
   //   'data-builder-id': modifiedTree.uuid,
   // });
+};
+
+const packageImportList: Record<string, CodeSandboxImport> = {
+  '@fluentui/react-icons-northstar': {
+    version: projectPackageJson.version,
+    required: false,
+  },
+  '@fluentui/react-northstar': {
+    version: projectPackageJson.version,
+    required: false,
+  },
+};
+
+export const JSONTreeToImports = (tree: JSONTreeElement, imports = {}) => {
+  if (tree.props?.icon) {
+    const iconModule =
+      tree.moduleName === '@fluentui/react-northstar' ? '@fluentui/react-icons-northstar' : 'ErrorNoPackage';
+    if (imports.hasOwnProperty(iconModule)) {
+      if (!imports[iconModule].includes(tree.props?.icon.type)) {
+        imports[iconModule].push(tree.props?.icon.type);
+      }
+    } else {
+      imports[iconModule] = [tree.props?.icon.type];
+    }
+  }
+  if (tree.moduleName && tree.props?.trigger) {
+    if (tree.props?.trigger.$$typeof === 'Symbol(react.element)') {
+      if (imports.hasOwnProperty(tree.moduleName)) {
+        if (!imports[tree.moduleName].includes(tree.props?.trigger.type)) {
+          imports[tree.moduleName].push(tree.props?.trigger.type);
+        }
+      } else {
+        imports[tree.moduleName] = [tree.props?.trigger.type];
+      }
+    }
+  }
+  if (tree.moduleName && tree.$$typeof === 'Symbol(react.element)') {
+    if (imports.hasOwnProperty(tree.moduleName)) {
+      if (!imports[tree.moduleName].includes(tree.displayName)) {
+        imports[tree.moduleName].push(tree.displayName);
+      }
+    } else {
+      imports[tree.moduleName] = [tree.displayName];
+    }
+  }
+
+  tree.props?.children?.forEach(item => {
+    if (typeof item !== 'string') {
+      imports = JSONTreeToImports(item, imports);
+    }
+  });
+  return imports;
+};
+
+export const getCodeSandboxInfo = (tree: JSONTreeElement, code: string) => {
+  const imports: Record<string, string[]> = JSONTreeToImports(tree);
+  let codeSandboxExport = 'import * as React from "react";\n';
+  const packageImports: Record<string, CodeSandboxImport> = {
+    '@fluentui/code-sandbox': {
+      version: sandboxPackageJson.version,
+      required: true,
+    },
+    react: {
+      version: projectPackageJson.peerDependencies['react'],
+      required: true,
+    },
+    'react-dom': {
+      version: projectPackageJson.peerDependencies['react-dom'],
+      required: true,
+    },
+    prettier: {
+      version: docsComponentsPackageJson.peerDependencies['prettier'],
+      required: true,
+    },
+  };
+  for (const [module, components] of Object.entries(imports)) {
+    codeSandboxExport += `import {${components.join(', ')}} from "${module}";\n`;
+    if (packageImportList[module]) {
+      packageImports[module] = packageImportList[module];
+    } else {
+      console.error(
+        `Undefined module "${module}" for export to codesandbox for components {${components.join(', ')}} `,
+      );
+    }
+  }
+  codeSandboxExport += `\n export default function Example() { \n return (\n
+  ${code} \n);}`;
+
+  return { code: codeSandboxExport, imports: packageImports };
 };
 
 /**

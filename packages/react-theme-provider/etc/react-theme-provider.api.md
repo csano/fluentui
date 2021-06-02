@@ -4,105 +4,39 @@
 
 ```ts
 
-import * as React from 'react';
+import { ComponentProps } from '@fluentui/react-utilities';
+import { PartialTheme } from '@fluentui/react-theme';
+import * as React_2 from 'react';
+import { Theme } from '@fluentui/react-theme';
+import { useTheme } from '@fluentui/react-shared-contexts';
 
 // @public (undocumented)
-export type ColorPlateSet = ColorTokens & ColorTokenStates;
-
-// @public
-export type ColorTokens = Partial<{
-    background: string;
-    contentColor: string;
-    subTextColor: string;
-    linkColor: string;
-    iconColor: string;
-    borderColor: string;
-    dividerColor: string;
-    focusColor: string;
-    focusInnerColor: string;
-}>;
-
-// @public
-export type ColorTokenStates = Partial<{
-    hovered: ColorTokens;
-    pressed: ColorTokens;
-    disabled: ColorTokens;
-    checked: ColorTokens;
-    checkedHovered: ColorTokens;
-    checkedPressed: ColorTokens;
-}>;
+export function renderThemeProvider(state: ThemeProviderState): JSX.Element;
 
 // @public (undocumented)
-export type FontTokens = Partial<{
-    fontFamily: string;
-    fontSize: string;
-    fontWeight: string;
-}>;
+export const ThemeProvider: React_2.ForwardRefExoticComponent<ThemeProviderProps & React_2.RefAttributes<HTMLElement>>;
 
 // @public (undocumented)
-export const getStyleFromPropsAndOptions: <TProps extends StyleProps<import("./types").ColorPlateSet>, TOptions extends StyleOptions<TProps>>(props: TProps, options: TOptions, prefix?: string | undefined) => import("react").CSSProperties;
-
-// @public
-export const mergeThemes: (...themes: (Theme | PartialTheme | undefined)[]) => Theme;
-
-// @public
-export interface PartialTheme extends RecursivePartial<Theme> {
-}
-
-// @public
-export type RecursivePartial<T> = {
-    [P in keyof T]?: T[P] extends (infer U)[] ? RecursivePartial<U>[] : T[P] extends object ? RecursivePartial<T[P]> : T[P];
-};
-
-// @public (undocumented)
-export interface StyleOptions<TProps> {
+export interface ThemeProviderProps extends ComponentProps, React_2.HTMLAttributes<HTMLElement> {
+    targetDocument?: Document | undefined;
     // (undocumented)
-    slotProps: ((props: TProps) => Record<string, object>)[];
-}
-
-// @public
-export interface StyleProps<TTokens extends ColorPlateSet = ColorPlateSet> {
-    // (undocumented)
-    style?: React.CSSProperties;
-    // (undocumented)
-    tokens?: TTokens;
-}
-
-// @public
-export interface Theme {
-    // (undocumented)
-    stylesheets: string[];
-    // (undocumented)
-    tokens: {
-        body: ColorPlateSet & TokenSetType;
-        [key: string]: TokenSetType;
-    };
-}
-
-// @public
-export const ThemeProvider: React.ForwardRefExoticComponent<ThemeProviderProps & React.RefAttributes<HTMLDivElement>>;
-
-// @public
-export interface ThemeProviderProps extends React.HTMLAttributes<HTMLDivElement> {
     theme?: PartialTheme | Theme;
 }
 
-// @public
-export type TokenSetType = string | {
-    [key: string]: TokenSetType | undefined;
-};
+// @public (undocumented)
+export const themeProviderShorthandProps: (keyof ThemeProviderProps)[];
 
 // @public (undocumented)
-export const tokensToStyleObject: (tokens?: {
-    [key: string]: string | {
-        [key: string]: string | any | undefined;
-    } | undefined;
-} | undefined, prefix?: string | undefined, style?: {
-    [key: string]: string | number | undefined;
-}) => import("react").CSSProperties;
+export interface ThemeProviderState extends ThemeProviderProps {
+    ref: React_2.MutableRefObject<HTMLElement>;
+    // (undocumented)
+    theme: Theme;
+}
+
+export { useTheme }
 
 // @public
-export const useTheme: () => Theme;
+export const useThemeProvider: (props: ThemeProviderProps, ref: React_2.Ref<HTMLElement>, defaultProps?: ThemeProviderProps | undefined) => ThemeProviderState;
 
 
 // (No @packageDocumentation comment for this package)

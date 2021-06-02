@@ -5,7 +5,7 @@ import { menuItemClassName } from '../../../../components/Menu/MenuItem';
 import { menuItemIndicatorClassName } from '../../../../components/Menu/MenuItemIndicator';
 import { getColorScheme } from '../../colors';
 import { ComponentSlotStylesPrepared, ICSSInJSStyle } from '@fluentui/styles';
-import { submenuIndicatorUrl } from './submenuIndicatorUrl';
+import { submenuIndicatorUrl, submenuIndicatorDirection } from './submenuIndicatorUrl';
 import {
   horizontalPillsRightMargin,
   verticalPillsBottomMargin,
@@ -14,7 +14,7 @@ import {
 } from './menuItemStyles';
 
 export const menuItemWrapperStyles: ComponentSlotStylesPrepared<MenuItemWrapperStylesProps, MenuVariables> = {
-  root: ({ props, variables: v }): ICSSInJSStyle => {
+  root: ({ props, variables: v, rtl }): ICSSInJSStyle => {
     const {
       active,
       disabled,
@@ -26,6 +26,7 @@ export const menuItemWrapperStyles: ComponentSlotStylesPrepared<MenuItemWrapperS
       underlined,
       vertical,
       primary,
+      on,
     } = props;
     const colors = getColorScheme(v.colorScheme, null, primary);
 
@@ -76,15 +77,16 @@ export const menuItemWrapperStyles: ComponentSlotStylesPrepared<MenuItemWrapperS
       ...(active && {
         color: v.wrapperColorActive,
 
-        ...(!underlined && {
-          background: v.backgroundColorActive || colors.backgroundActive,
+        ...(!underlined &&
+          on !== 'hover' && {
+            background: v.backgroundColorActive || colors.backgroundActive,
 
-          ...(iconOnly && { background: v.activeIconOnlyWrapperBackgroundColor }),
-          ...(!iconOnly &&
-            primary && {
-              color: colors.foregroundActive,
-            }),
-        }),
+            ...(iconOnly && { background: v.activeIconOnlyWrapperBackgroundColor }),
+            ...(!iconOnly &&
+              primary && {
+                color: colors.foregroundActive,
+              }),
+          }),
 
         ...(underlined && {
           color: v.activeUnderlinedWrapperColor,
@@ -121,7 +123,7 @@ export const menuItemWrapperStyles: ComponentSlotStylesPrepared<MenuItemWrapperS
             color: v.primaryWrapperColorFocus,
           }),
         }),
-        ...(!iconOnly && getFocusedStyles({ props, variables: v, colors })),
+        ...(!iconOnly && !underlined && getFocusedStyles({ props, variables: v, colors })),
         ...(iconOnly && {
           background: v.iconOnlyWrapperBackgroundColorFocus,
           color: v.iconOnlyColorActive,
@@ -157,11 +159,13 @@ export const menuItemWrapperStyles: ComponentSlotStylesPrepared<MenuItemWrapperS
         }),
 
         [`&>.${menuItemClassName}>.${menuItemIndicatorClassName}`]: {
-          backgroundImage: submenuIndicatorUrl(v.indicatorColorHover, vertical),
+          backgroundImage: submenuIndicatorUrl(v.indicatorColorHover),
 
           ...(primary && {
-            backgroundImage: submenuIndicatorUrl(v.primaryIndicatorColorHover, vertical),
+            backgroundImage: submenuIndicatorUrl(v.primaryIndicatorColorHover),
           }),
+
+          ...submenuIndicatorDirection(vertical, rtl),
         },
       },
 

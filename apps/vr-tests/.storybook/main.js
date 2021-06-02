@@ -1,6 +1,15 @@
 // your app's webpack.config.js
-const custom = require('@uifabric/build/storybook/webpack.config');
+const custom = require('@fluentui/scripts/storybook/webpack.config');
 
 module.exports = {
-  webpackFinal: config => custom({ config }),
+  stories: ['../src/**/*.stories.tsx'],
+  babel: {
+    plugins: ['module:@fluentui/babel-make-styles'],
+  },
+  typescript: {
+    // disable react-docgen-typescript (totally not needed here, slows things down a lot)
+    reactDocgen: false,
+  },
+  webpackFinal: config => custom(config),
+  addons: ['@storybook/addon-actions'],
 };

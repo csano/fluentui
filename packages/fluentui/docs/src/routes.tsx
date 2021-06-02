@@ -2,7 +2,6 @@ import { Loader } from '@fluentui/react-northstar';
 import * as React from 'react';
 import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom';
 
-import ExternalExampleLayout from './components/ExternalExampleLayout';
 import DocsLayout from './components/DocsLayout';
 import DocsRoot from './components/DocsRoot';
 import DocsBehaviorRoot from './components/DocsBehaviorRoot';
@@ -12,7 +11,6 @@ import { PerfDataProvider } from './components/ComponentDoc/PerfChart';
 import * as Composition from './pages/Composition.mdx';
 import * as Debugging from './pages/Debugging.mdx';
 import * as Layout from './pages/Layout.mdx';
-import * as ComponentArchitecture from './pages/ComponentArchitecture.mdx';
 import Accessibility from './views/Accessibility';
 import Colors from './views/Colors';
 import ColorPalette from './views/ColorPalette';
@@ -22,7 +20,6 @@ import CategoryColorSchemes from './views/CategoryColorSchemes';
 import FAQ from './views/FAQ';
 import Performance from './views/Performance';
 import * as ShorthandProps from './pages/ShorthandProps.mdx';
-import * as ThemingSpecification from './pages/ThemingSpecification.mdx';
 import Introduction from './views/Introduction';
 import PageNotFound from './views/PageNotFound';
 import QuickStart from './views/QuickStart';
@@ -34,7 +31,40 @@ import AccessibilityBehaviors from './views/AccessibilityBehaviors';
 import FocusZone from './views/FocusZoneDoc';
 import FocusTrapZone from './views/FocusTrapZoneDoc';
 import AutoFocusZone from './views/AutoFocusZoneDoc';
+import PerformanceTests from './views/PerformanceTests';
+import ButtonNameComputation from './views/ButtonNameComputation';
 import { LazyWithBabel } from './components/ComponentDoc/LazyWithBabel';
+import {
+  ChatPanePrototype,
+  ChatMessagesPrototype,
+  CustomScrollbarPrototype,
+  CustomToolbarPrototype,
+  AsyncShorthandPrototype,
+  EmployeeCardPrototype,
+  MeetingOptionsPrototype,
+  ParticipantsListPrototype,
+  SearchPagePrototype,
+  MentionsPrototype,
+  DropdownsPrototype,
+  PopupsPrototype,
+  AlertsPrototype,
+  EditorToolbarPrototype,
+  HexagonalAvatarPrototype,
+  TablePrototype,
+  NestedPopupsAndDialogsPrototype,
+  FormValidationPrototype,
+  VirtualizedTreePrototype,
+  VirtualizedTablePrototype,
+  CopyToClipboardPrototype,
+  TextAreaAutoSize,
+  MenuList,
+  VirtualizedStickyTreePrototype,
+  RosterPrototype,
+} from '@fluentui/react-northstar-prototypes';
+
+const ExternalExampleLayout = React.lazy(
+  () => import(/* webpackChunkName: "examples" */ './components/ExternalExampleLayout'),
+);
 
 const _Builder = React.lazy(async () => ({
   default: (await import(/* webpackChunkName: "builder" */ '@fluentui/react-builder')).Builder,
@@ -45,60 +75,9 @@ const Builder: React.FunctionComponent = () => (
     <_Builder />
   </LazyWithBabel>
 );
-
 const FullScreenPreview = React.lazy(async () => ({
   default: (await import(/* webpackChunkName: "builder" */ '@fluentui/react-builder')).FullScreenPreview,
 }));
-
-const CustomToolbarPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/customToolbar'),
-);
-const ChatPanePrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/chatPane'));
-const ChatMessagesPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/chatMessages'),
-);
-const AsyncShorthandPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/AsyncShorthand'),
-);
-const EmployeeCardPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/employeeCard'),
-);
-const MeetingOptionsPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/meetingOptions'),
-);
-const SearchPagePrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/SearchPage'));
-const MentionsPrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/mentions'));
-const DropdownsPrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/dropdowns'));
-const PopupsPrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/popups'));
-const AlertsPrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/alerts'));
-const NestedPopupsAndDialogsPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/NestedPopupsAndDialogs'),
-);
-const VirtualizedTreePrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/VirtualizedTree'),
-);
-const CopyToClipboardPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/CopyToClipboard'),
-);
-const ParticipantsListPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/ParticipantsList'),
-);
-const CustomScrollbarPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/customScrollbar'),
-);
-const EditorToolbarPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/EditorToolbar'),
-);
-const HexagonalAvatarPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/hexagonalAvatar'),
-);
-const TablePrototype = React.lazy(() => import(/* webpackChunkName: "prototypes" */ './prototypes/table'));
-const VirtualizedTablePrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/VirtualizedTable'),
-);
-const FormValidationPrototype = React.lazy(() =>
-  import(/* webpackChunkName: "prototypes" */ './prototypes/FormValidation'),
-);
 
 const Routes = () => (
   <React.Suspense fallback="Loading...">
@@ -125,7 +104,8 @@ const Routes = () => (
                   <MarkdownPage page={Debugging} />
                 </Route>
                 <Route exact path="/quick-start" component={QuickStart} />
-
+                <Route exact path="/perf-tests" component={PerformanceTests} />
+                <Route exact path="/prototype-roster" component={RosterPrototype} />
                 <Route exact path="/prototype-chat-pane" component={ChatPanePrototype} />
                 <Route exact path="/prototype-chat-messages" component={ChatMessagesPrototype} />
                 <Route exact path="/prototype-custom-scrollbar" component={CustomScrollbarPrototype} />
@@ -141,21 +121,20 @@ const Routes = () => (
                 <Route exact path="/prototype-alerts" component={AlertsPrototype} />
                 <Route exact path="/prototype-editor-toolbar" component={EditorToolbarPrototype} />
                 <Route exact path="/prototype-hexagonal-avatar" component={HexagonalAvatarPrototype} />
+                <Route exact path="/prototype-text-area-autosize" component={TextAreaAutoSize} />
                 <Route exact path="/prototype-table" component={TablePrototype} />
                 <Route exact path="/prototype-nested-popups-and-dialogs" component={NestedPopupsAndDialogsPrototype} />
                 <Route exact path="/prototype-form-validation" component={FormValidationPrototype} />
                 <Route exact path="/virtualized-tree" component={VirtualizedTreePrototype} />
+                <Route exact path="/virtualized-sticky-tree" component={VirtualizedStickyTreePrototype} />
                 <Route exact path="/virtualized-table" component={VirtualizedTablePrototype} />
                 <Route exact path="/prototype-copy-to-clipboard" component={CopyToClipboardPrototype} />
-                <Route
-                  exact
-                  path="/unstable-datepicker"
-                  render={() => <Redirect to={`/components/datepicker/definition`} />}
-                />
+                <Route exact path="/prototype-menu-list" component={MenuList} />
 
                 <Route exact path="/faq" component={FAQ} />
                 <Route exact path="/accessibility" component={Accessibility} />
                 <Route exact path="/accessibility-behaviors" component={AccessibilityBehaviors} />
+                <Route exact path="/button-name-computation" component={ButtonNameComputation} />
                 <Route exact path="/focus-zone" component={FocusZone} />
                 <Route exact path="/focus-trap-zone" component={FocusTrapZone} />
                 <Route exact path="/auto-focus-zone" component={AutoFocusZone} />
@@ -168,12 +147,6 @@ const Routes = () => (
                   <MarkdownPage page={ShorthandProps} />
                 </Route>
                 <Route exact path="/icon-viewer" component={IconViewer} />
-                <Route exact path="/component-architecture">
-                  <MarkdownPage page={ComponentArchitecture} />
-                </Route>
-                <Route exact path="/theming-specification">
-                  <MarkdownPage page={ThemingSpecification} />
-                </Route>
                 <Route exact path="/integrate-custom-components" component={IntegrateCustomComponents} />
                 <Route exact path="/performance" component={Performance} />
                 <Route exact path="/composition">

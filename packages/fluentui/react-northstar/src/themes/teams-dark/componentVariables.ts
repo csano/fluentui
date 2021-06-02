@@ -8,7 +8,7 @@ export { headerDescriptionVariables as HeaderDescription } from './components/He
 export { radioGroupItemVariables as RadioGroupItem } from './components/RadioGroup/radioGroupItemVariables';
 export { segmentVariables as Segment } from './components/Segment/segmentVariables';
 export { textVariables as Text } from './components/Text/textVariables';
-export { hierarchicalTreeTitleVariables as HierarchicalTreeTitle } from './components/HierarchicalTree/hierarchicalTreeTitleVariables';
+
 export { menuVariables as Menu } from './components/Menu/menuVariables';
 export { menuDividerVariables as MenuDivider } from './components/Menu/menuDividerVariables';
 export { menuItemVariables as MenuItem } from './components/Menu/menuItemVariables';
@@ -18,7 +18,7 @@ export { menuItemIndicatorVariables as MenuItemIndicator } from './components/Me
 export { menuItemWrapperVariables as MenuItemWrapper } from './components/Menu/menuItemWrapperVariables';
 export { svgIconVariables as SvgIcon } from './components/SvgIcon/svgIconVariables';
 export { reactionVariables as Reaction } from './components/Reaction/reactionVariables';
-export { alertVariables as Alert } from './components/Alert/alertVariables';
-export { alertDismissActionVariables as AlertDismissAction } from './components/Alert/alertDismissActionVariables';
 export { providerVariables as Provider } from './components/Provider/providerVariables';
 export { labelVariables as Label } from './components/Label/labelVariables';
+export { datepickerCalendarCellVariables as DatepickerCalendarCell } from './components/Datepicker/datepickerCalendarCellVariables';
+export { datepickerCalendarCellButtonVariables as DatepickerCalendarCellButton } from './components/Datepicker/datepickerCalendarCellButtonVariables';

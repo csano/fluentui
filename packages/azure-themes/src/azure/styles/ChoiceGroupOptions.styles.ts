@@ -1,6 +1,5 @@
-import { IChoiceGroupOptionStyleProps, IChoiceGroupOptionStyles } from 'office-ui-fabric-react/lib/ChoiceGroup';
+import { IChoiceGroupOptionStyleProps, IChoiceGroupOptionStyles } from '@fluentui/react/lib/ChoiceGroup';
 import { IExtendedSemanticColors } from '../IExtendedSemanticColors';
-import { FontSizes } from '../AzureType';
 import * as StyleConstants from '../Constants';
 
 export const ChoiceGroupOptionStyles = (props: IChoiceGroupOptionStyleProps): Partial<IChoiceGroupOptionStyles> => {
@@ -9,15 +8,23 @@ export const ChoiceGroupOptionStyles = (props: IChoiceGroupOptionStyleProps): Pa
   const extendedSemanticColors = semanticColors as IExtendedSemanticColors;
   return {
     root: {
-      fontSize: FontSizes.size13,
-      color: extendedSemanticColors.labelText,
+      fontSize: theme.fonts.medium.fontSize,
+      color: semanticColors.bodyText,
       backgroundColor: semanticColors.bodyBackground,
       selectors: {
+        '.ms-ChoiceField-wrapper': {
+          padding: '4px',
+        },
         '.ms-ChoiceFieldLabel': {
-          fontSize: FontSizes.size13,
+          fontSize: theme.fonts.medium.fontSize,
           verticalAlign: 'middle',
         },
         '.is-inFocus': {
+          selectors: {
+            ':after': {
+              border: `1px solid ${extendedSemanticColors.choiceGroupFocusBorder} !important`,
+            },
+          },
           border: `${extendedSemanticColors.choiceGroupContainerBorder}
           ${extendedSemanticColors.choiceGroupContainerBorderStyle}
           ${extendedSemanticColors.checkboxBorderChecked}`,
@@ -30,7 +37,7 @@ export const ChoiceGroupOptionStyles = (props: IChoiceGroupOptionStyleProps): Pa
           // The circle
           ':before': [
             {
-              borderColor: extendedSemanticColors.controlOutline,
+              borderColor: semanticColors.bodyText,
             },
             checked && {
               backgroundColor: 'transparent',
@@ -78,7 +85,11 @@ export const ChoiceGroupOptionStyles = (props: IChoiceGroupOptionStyleProps): Pa
               checked && {
                 selectors: {
                   ':before': {
-                    borderColor: extendedSemanticColors.primaryButtonBackgroundPressed,
+                    borderColor: extendedSemanticColors.checkboxBorderCheckedHovered,
+                  },
+                  ':after': {
+                    borderColor: extendedSemanticColors.checkboxBorderCheckedHovered,
+                    backgroundColor: extendedSemanticColors.choiceGroupUncheckedDotHover,
                   },
                 },
               },

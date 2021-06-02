@@ -8,11 +8,11 @@ import {
   useAccessibility,
   useStyles,
   useTelemetry,
+  useContextSelectors,
 } from '@fluentui/react-bindings';
 import { handleRef, Ref } from '@fluentui/react-component-ref';
 import { EventListener } from '@fluentui/react-component-event-listener';
 import { GetRefs, NodeRef, Unstable_NestingAuto } from '@fluentui/react-component-nesting-registry';
-import { useContextSelectors } from '@fluentui/react-context-selector';
 import * as customPropTypes from '@fluentui/react-proptypes';
 import * as _ from 'lodash';
 import * as PropTypes from 'prop-types';
@@ -208,7 +208,7 @@ export const ToolbarItem = compose<'button', ToolbarItemProps, ToolbarItemStyles
 
     const handleWrapperClick = (e: React.MouseEvent | React.KeyboardEvent) => {
       if (menu) {
-        if (doesNodeContainClick(menuRef.current, e.nativeEvent as MouseEvent, context.target)) {
+        if (doesNodeContainClick(menuRef.current, e.nativeEvent as MouseEvent, context.target, false)) {
           trySetMenuOpen(false, e);
         }
       }

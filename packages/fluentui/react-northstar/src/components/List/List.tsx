@@ -25,6 +25,12 @@ import {
 } from '../../utils';
 import { ListContextProvider, ListContextValue } from './listContext';
 import { ListItem, ListItemProps } from './ListItem';
+import { ListItemContent } from './ListItemContent';
+import { ListItemContentMedia } from './ListItemContentMedia';
+import { ListItemEndMedia } from './ListItemEndMedia';
+import { ListItemHeader } from './ListItemHeader';
+import { ListItemHeaderMedia } from './ListItemHeaderMedia';
+import { ListItemMedia } from './ListItemMedia';
 
 export interface ListProps extends UIComponentProps, ChildrenComponentProps {
   /** Accessibility behavior if overridden by the user. */
@@ -78,10 +84,20 @@ export const listClassName = 'ui-list';
  * List may follow one of the following accessibility semantics:
  * - Static non-navigable list. Implements [ARIA list](https://www.w3.org/TR/wai-aria-1.1/#list) role.
  * - Selectable list: allows the user to select item from a list of choices. Implements [ARIA Listbox](https://www.w3.org/TR/wai-aria-practices-1.1/#Listbox) design pattern.
+ * @accessibilityIssues
+ * [NVDA - Browse Mode does not work with listbox #12350](https://github.com/nvaccess/nvda/issues/12350)
+ * [JAWS - Listbox options are not reachable in Virtual Cursor PC mode #517](https://github.com/FreedomScientific/VFO-standards-support/issues/517)
+ * [JAWS - Aria-selected is not narrated for the single-select listbox, when selection is NOT moved with focus #440](https://github.com/FreedomScientific/VFO-standards-support/issues/440)
  */
 export const List: ComponentWithAs<'ul', ListProps> &
   FluentComponentStaticProps<ListProps> & {
     Item: typeof ListItem;
+    ItemContent: typeof ListItemContent;
+    ItemContentMedia: typeof ListItemContentMedia;
+    ItemEndMedia: typeof ListItemEndMedia;
+    ItemHeader: typeof ListItemHeader;
+    ItemHeaderMedia: typeof ListItemHeaderMedia;
+    ItemMedia: typeof ListItemMedia;
   } = props => {
   const context = useFluentContext();
   const { setStart, setEnd } = useTelemetry(List.displayName, context.telemetry);
@@ -202,5 +218,11 @@ List.propTypes = {
 
 List.handledProps = Object.keys(List.propTypes) as any;
 List.Item = ListItem;
+List.ItemContent = ListItemContent;
+List.ItemContentMedia = ListItemContentMedia;
+List.ItemEndMedia = ListItemEndMedia;
+List.ItemHeader = ListItemHeader;
+List.ItemHeaderMedia = ListItemHeaderMedia;
+List.ItemMedia = ListItemMedia;
 
 List.create = createShorthandFactory({ Component: List, mappedArrayProp: 'items' });

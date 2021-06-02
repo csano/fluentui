@@ -1,8 +1,11 @@
 import { IAzureSemanticColors } from './IAzureSemanticColors';
 
 export namespace BaseColors {
+  export const BLUE_F0F6FF = '#F0F6FF';
   export const BLUE_CCE1FF = '#cce1ff';
+  export const BLUE_DEECF9 = '#deecf9';
   export const BLUE_0000CD = '#0000cd';
+  export const BLUE_00245B = '#00245B';
   export const BLUE_00E8E8 = '#00e8e8';
   export const BLUE_00FFFF = '#00ffff';
   export const BLUE_004578 = '#004578';
@@ -14,8 +17,10 @@ export namespace BaseColors {
   export const BLUE_012B65 = '#012b65';
   export const BLUE_106EBE = '#106EBE';
   export const BLUE_02FEFF = '#02FEFF';
+  export const BLUE_043862 = '#043862';
   export const BLUE_6CA9FE = '#6ca9fe';
   export const BLUE_6CB8F6 = '#6cb8f6';
+  export const BLUE_82C7FF = '#82C7FF';
   export const BLUE_4894FE = '#4894fe';
   export const BLUE_257FFE = '#257FFE';
   export const BLUE_2899F5 = '#2899f5';
@@ -23,25 +28,40 @@ export namespace BaseColors {
   export const BLUE_55B3FF = '#55b3ff';
   export const GREEN_00FF00 = '#00FF00';
   export const GREEN_E6FFCC = '#e6ffcc';
+  export const GREEN_F8FFF0 = '#F8FFF0';
+  export const GREEN_92C353 = '#92C353';
   export const GREEN_5DB300 = '#5db300';
+  export const GREEN_57A300 = '#57A300';
   export const GREEN_428000 = '#428000';
+  export const GREEN_393D1B = '#393D1B';
   export const GREEN_1A3300 = '#1a3300';
   export const GREEN_0AFF00 = '#0AFF00';
+  export const RED_FEF0F1 = '#FEF0F1';
   export const RED_FDD8DB = '#fdd8db';
   export const RED_F63747 = '#f63747';
+  export const RED_F1707B = '#F1707B';
   export const RED_E00B1C = '#e00b1c';
+  export const RED_A4262C = '#a4262c';
+  export const RED_442726 = '#442726';
   export const RED_61050C = '#61050c';
-  export const RED_800002 = '#800002';
+  export const RED_800000 = '#800002';
+  export const ORANGE_DB7500 = '#DB7500';
   export const ORANGE_FFDFB8 = '#ffdfb8';
+  export const ORANGE_FFF8F0 = '#FFF8F0';
   export const ORANGE_FF8C00 = '#ff8c00';
   export const ORANGE_422400 = '#422400';
+  export const ORANGE_4F2A0F = '#4F2A0F';
   export const PURPLE_800080 = '#800080';
+  export const PURPLE_F9F3FC = '#F9F3FC';
   export const PURPLE_EFDBF5 = '#efdbf5';
   export const PURPLE_C87FDC = '#c87fdc';
+  export const PURPLE_917EDB = '#917EDB';
   export const PURPLE_8A2DA5 = '#8a2da5';
   export const PURPLE_660166 = '#660166';
   export const PURPLE_471754 = '#471754';
+  export const PURPLE_38134A = '#38134A';
   export const YELLOW_FEFF00 = '#FEFF00';
+  export const YELLOW_FCE100 = '#FCE100';
   export const GRAY_CCCCCC = '#CCCCCC';
   export const GRAY_111111 = '#111111';
   export const GRAY_161616 = '#161616';
@@ -51,11 +71,13 @@ export namespace BaseColors {
   export const GRAY_292827 = '#292827';
   export const GRAY_323130 = '#323130';
   export const GRAY_302928 = '#302928';
+  export const GRAY_3B3A39 = '#3B3A39';
   export const GRAY_414141 = '#414141';
   export const GRAY_484644 = '#484644';
   export const GRAY_595959 = '#595959';
   export const GRAY_605E5C = '#605E5C';
   export const GRAY_747474 = '#747474';
+  export const GRAY_797775 = '#797775';
   export const GRAY_808080 = '#808080';
   export const GRAY_8A8886 = '#8A8886';
   export const GRAY_979693 = '#979693';
@@ -65,6 +87,7 @@ export namespace BaseColors {
   export const GRAY_EDEBE9 = '#EDEBE9';
   export const GRAY_E1DFDD = '#E1DFDD';
   export const GRAY_F3F2F1 = '#F3F2F1';
+  export const GRAY_FAF9F8 = '#FAF9F8';
   export const GRAY_6B849C = '#6B849C';
   export const BLACK = '#000000';
   export const WHITE = '#ffffff';
@@ -126,43 +149,63 @@ export const DarkSemanticColors: IAzureSemanticColors = {
   text: {
     list: BaseColors.WHITE,
     heading: BaseColors.WHITE,
-    body: BaseColors.WHITE,
-    bodyHovered: BaseColors.WHITE,
-    value: BaseColors.WHITE,
+    body: BaseColors.GRAY_F3F2F1,
+    bodyHovered: BaseColors.GRAY_FAF9F8,
+    value: BaseColors.GRAY_F3F2F1,
     icon: BaseColors.WHITE,
     label: BaseColors.WHITE,
     disabled: BaseColors.GRAY_A19F9D,
     hyperlink: BaseColors.BLUE_4894FE,
-    hyperlinkHovered: BaseColors.BLUE_4894FE,
+    hyperlinkHovered: BaseColors.BLUE_82C7FF,
     hyperlinkBackgroundHovered: BaseColors.TRANSPARENT,
     success: BaseColors.GREEN_5DB300,
-    error: BaseColors.RED_F63747,
-    placeholder: BaseColors.GRAY_AFAFAF,
+    error: BaseColors.RED_F1707B,
+    placeholder: BaseColors.GRAY_A19F9D,
   },
   statusBar: {
-    okay: BaseColors.GREEN_1A3300,
-    error: BaseColors.RED_61050C,
-    warning: BaseColors.ORANGE_422400,
-    information: BaseColors.BLUE_012B65,
-    upsell: BaseColors.PURPLE_8A2DA5,
+    link: BaseColors.BLUE_6CB8F6,
+    background: {
+      default: BaseColors.BLUE_00245B,
+      okay: BaseColors.GREEN_393D1B,
+      error: BaseColors.RED_442726,
+      warning: BaseColors.ORANGE_4F2A0F,
+      information: BaseColors.BLUE_00245B,
+      upsell: BaseColors.PURPLE_38134A,
+    },
+    border: {
+      default: BaseColors.BLUE_00245B,
+      okay: BaseColors.GREEN_393D1B,
+      error: BaseColors.RED_442726,
+      warning: BaseColors.ORANGE_4F2A0F,
+      information: BaseColors.BLUE_00245B,
+      upsell: BaseColors.PURPLE_38134A,
+    },
+    icon: {
+      default: BaseColors.BLUE_2899F5,
+      okay: BaseColors.GREEN_92C353,
+      error: BaseColors.RED_F1707B,
+      warning: BaseColors.YELLOW_FCE100,
+      information: BaseColors.BLUE_2899F5,
+      upsell: BaseColors.PURPLE_917EDB,
+    },
   },
   primaryButton: {
     rest: {
-      background: BaseColors.BLUE_2899F5,
-      text: BaseColors.GRAY_1B1A19,
-      border: BaseColors.BLUE_2899F5,
+      background: BaseColors.BLUE_0078D4,
+      text: BaseColors.WHITE,
+      border: BaseColors.BLUE_0078D4,
     },
     hover: {
-      background: BaseColors.BLUE_3AA0F3,
-      text: BaseColors.GRAY_1B1A19,
+      background: BaseColors.BLUE_106EBE,
+      text: BaseColors.WHITE,
     },
     pressed: {
-      background: BaseColors.BLUE_6CB8F6,
-      text: BaseColors.GRAY_1B1A19,
+      background: BaseColors.BLUE_005A9E,
+      text: BaseColors.WHITE,
     },
     disabled: {
-      background: BaseColors.GRAY_F3F2F1,
-      border: BaseColors.GRAY_F3F2F1,
+      background: BaseColors.GRAY_484644,
+      border: BaseColors.GRAY_252423,
       text: BaseColors.GRAY_A19F9D,
     },
     focus: {
@@ -170,62 +213,70 @@ export const DarkSemanticColors: IAzureSemanticColors = {
     },
   },
   disabledButton: {
-    background: BaseColors.GRAY_F3F2F1,
-    text: BaseColors.GRAY_A19F9D,
+    background: BaseColors.GRAY_252423,
+    text: BaseColors.GRAY_797775,
   },
   secondaryButton: {
     rest: {
-      background: BaseColors.GRAY_111111,
-      border: BaseColors.GRAY_979693,
-      text: BaseColors.WHITE,
+      background: BaseColors.GRAY_1B1A19,
+      border: BaseColors.GRAY_8A8886,
+      text: BaseColors.GRAY_F3F2F1,
     },
     hover: {
       background: BaseColors.GRAY_252423,
       border: BaseColors.GRAY_979693,
-      color: BaseColors.WHITE,
+      color: BaseColors.GRAY_FAF9F8,
     },
     pressed: {
-      text: BaseColors.WHITE,
+      text: BaseColors.GRAY_FAF9F8,
       background: BaseColors.GRAY_292827,
       border: BaseColors.GRAY_979693,
+    },
+    focus: {
+      border: BaseColors.GRAY_A19F9D,
     },
   },
   checkBox: {
     rest: {
       border: BaseColors.GRAY_F3F2F1,
       hover: BaseColors.GRAY_A19F9D,
+      hoverText: BaseColors.GRAY_FAF9F8,
       background: BaseColors.BLUE_2899F5,
-      focus: BaseColors.BLUE_4894FE,
+      focus: BaseColors.GRAY_A19F9D,
       check: BaseColors.BLACK,
     },
     checked: {
       border: BaseColors.BLUE_2899F5,
       background: BaseColors.BLUE_2899F5,
       default: BaseColors.BLUE_6CB8F6,
-      hoverBackground: BaseColors.BLUE_6CB8F6,
-      hoverBorder: BaseColors.BLUE_6CB8F6,
+      hoverBackground: BaseColors.BLUE_82C7FF,
+      hoverBorder: BaseColors.BLUE_82C7FF,
     },
     disabled: {
       border: BaseColors.GRAY_484644,
+      background: BaseColors.GRAY_484644,
     },
   },
   controlOutlines: {
     rest: BaseColors.GRAY_808080,
-    disabled: BaseColors.GRAY_808080_070,
+    background: BaseColors.GRAY_252423,
+    disabled: BaseColors.GRAY_484644,
     hover: BaseColors.WHITE,
     accent: BaseColors.BLUE_106EBE,
+    focus: BaseColors.BLUE_2899F5,
     error: BaseColors.RED_F63747,
     dirty: BaseColors.PURPLE_C87FDC,
   },
   choiceGroup: {
     circle: {
-      hover: BaseColors.BLUE_3AA0F3,
+      hover: BaseColors.GRAY_A19F9D,
     },
+    focus: BaseColors.GRAY_A19F9D,
   },
   item: {
-    hover: BaseColors.GRAY_808080_015,
-    select: BaseColors.GRAY_808080_025,
-    selectHovered: BaseColors.GRAY_808080_070,
+    hover: BaseColors.GRAY_323130,
+    select: BaseColors.GRAY_3B3A39,
+    selectHovered: BaseColors.GRAY_484644,
   },
   shimmer: {
     primary: BaseColors.GRAY_808080,
@@ -237,7 +288,30 @@ export const DarkSemanticColors: IAzureSemanticColors = {
     },
   },
   commandBar: {
-    border: BaseColors.GRAY_605E5C,
+    border: BaseColors.GRAY_323130,
+    button: {
+      root: {
+        color: BaseColors.GRAY_F3F2F1,
+      },
+      disabled: {
+        color: BaseColors.GRAY_797775,
+      },
+      focus: {
+        borderColor: BaseColors.GRAY_A19F9D,
+      },
+      hover: {
+        background: BaseColors.GRAY_252423,
+        color: BaseColors.GRAY_FAF9F8,
+        icon: BaseColors.BLUE_3AA0F3,
+      },
+      selected: {
+        background: BaseColors.GRAY_292827,
+        icon: BaseColors.BLUE_6CB8F6,
+      },
+      selectedHover: {
+        background: BaseColors.GRAY_323130,
+      },
+    },
   },
   datePicker: {
     rest: {
@@ -250,6 +324,7 @@ export const DarkSemanticColors: IAzureSemanticColors = {
   },
   detailsRow: {
     border: BaseColors.GRAY_414141,
+    focus: BaseColors.GRAY_111111,
   },
   radioButton: {
     circle: {
@@ -260,12 +335,23 @@ export const DarkSemanticColors: IAzureSemanticColors = {
     pill: {
       disabled: BaseColors.GRAY_C8C6C4,
       uncheckedDisabled: BaseColors.BLACK,
-      checkedHover: BaseColors.BLUE_3AA0F3,
+      checkedHover: BaseColors.BLUE_82C7FF,
       uncheckedHover: BaseColors.BLACK,
     },
   },
   tabs: {
     hover: BaseColors.GRAY_252423,
+  },
+  teachingBubble: {
+    rest: {
+      background: BaseColors.BLUE_2899F5,
+      border: BaseColors.BLUE_2899F5,
+      text: BaseColors.BLACK,
+      secondaryBackround: BaseColors.BLACK,
+    },
+    hover: {
+      primaryButtonBackground: BaseColors.BLUE_043862,
+    },
   },
 };
 
@@ -279,7 +365,7 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
     value: BaseColors.WHITE,
     icon: BaseColors.WHITE,
     label: BaseColors.WHITE,
-    disabled: BaseColors.GRAY_A19F9D,
+    disabled: BaseColors.GREEN_0AFF00,
     hyperlink: BaseColors.YELLOW_FEFF00,
     hyperlinkHovered: BaseColors.BLACK,
     hyperlinkBackgroundHovered: BaseColors.BLUE_00FFFF,
@@ -288,11 +374,31 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
     placeholder: BaseColors.GREEN_0AFF00,
   },
   statusBar: {
-    okay: BaseColors.GREEN_1A3300,
-    error: BaseColors.RED_61050C,
-    warning: BaseColors.ORANGE_422400,
-    information: BaseColors.BLUE_012B65,
-    upsell: BaseColors.PURPLE_8A2DA5,
+    link: BaseColors.YELLOW_FEFF00,
+    background: {
+      default: BaseColors.TRANSPARENT,
+      okay: BaseColors.TRANSPARENT,
+      error: BaseColors.TRANSPARENT,
+      warning: BaseColors.TRANSPARENT,
+      information: BaseColors.TRANSPARENT,
+      upsell: BaseColors.TRANSPARENT,
+    },
+    border: {
+      default: BaseColors.BLUE_00245B,
+      okay: BaseColors.GREEN_393D1B,
+      error: BaseColors.RED_442726,
+      warning: BaseColors.ORANGE_4F2A0F,
+      information: BaseColors.BLUE_00245B,
+      upsell: BaseColors.PURPLE_38134A,
+    },
+    icon: {
+      default: BaseColors.BLUE_2899F5,
+      okay: BaseColors.GREEN_92C353,
+      error: BaseColors.RED_F1707B,
+      warning: BaseColors.YELLOW_FCE100,
+      information: BaseColors.BLUE_2899F5,
+      upsell: BaseColors.PURPLE_917EDB,
+    },
   },
   primaryButton: {
     rest: {
@@ -337,31 +443,38 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
       background: BaseColors.BLUE_00E8E8,
       border: BaseColors.BLUE_00E8E8,
     },
+    focus: {
+      border: BaseColors.GRAY_A19F9D,
+    },
   },
   checkBox: {
     rest: {
       border: BaseColors.GRAY_F3F2F1,
       background: BaseColors.BLUE_0078D4,
       hover: BaseColors.GRAY_A19F9D,
-      focus: BaseColors.BLUE_4894FE,
+      hoverText: BaseColors.WHITE,
+      focus: BaseColors.WHITE,
       check: BaseColors.WHITE,
     },
     checked: {
       border: BaseColors.BLUE_00FFFF,
-      background: BaseColors.TRANSPARENT,
+      background: BaseColors.GRAY_111111,
       default: BaseColors.BLUE_6CB8F6,
-      hoverBackground: BaseColors.TRANSPARENT,
+      hoverBackground: BaseColors.GRAY_111111,
       hoverBorder: BaseColors.PURPLE_800080,
     },
     disabled: {
-      border: BaseColors.GRAY_484644,
+      border: BaseColors.GREEN_0AFF00,
+      background: BaseColors.TRANSPARENT,
     },
   },
   controlOutlines: {
     rest: BaseColors.WHITE,
+    background: BaseColors.GRAY_111111,
     disabled: BaseColors.GRAY_808080_070,
     hover: BaseColors.WHITE,
     accent: BaseColors.BLUE_00FFFF,
+    focus: BaseColors.BLUE_00FFFF,
     error: BaseColors.RED_F63747,
     dirty: BaseColors.PURPLE_C87FDC,
   },
@@ -369,11 +482,12 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
     circle: {
       hover: BaseColors.BLUE_00FFFF,
     },
+    focus: BaseColors.GRAY_A19F9D,
   },
   item: {
     hover: BaseColors.BLUE_00FFFF,
     select: BaseColors.GRAY_808080_025,
-    selectHovered: BaseColors.GRAY_808080_070,
+    selectHovered: BaseColors.BLUE_00FFFF,
   },
   shimmer: {
     primary: BaseColors.GRAY_808080,
@@ -386,6 +500,29 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
   },
   commandBar: {
     border: BaseColors.GRAY_605E5C,
+    button: {
+      root: {
+        color: BaseColors.WHITE,
+      },
+      disabled: {
+        color: BaseColors.GREEN_0AFF00,
+      },
+      focus: {
+        borderColor: 'none',
+      },
+      hover: {
+        background: BaseColors.BLUE_00FFFF,
+        color: BaseColors.GRAY_1B1A19,
+        icon: BaseColors.BLACK,
+      },
+      selected: {
+        background: BaseColors.BLUE_00FFFF,
+        icon: BaseColors.BLACK,
+      },
+      selectedHover: {
+        background: BaseColors.BLUE_00FFFF,
+      },
+    },
   },
   datePicker: {
     rest: {
@@ -398,6 +535,7 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
   },
   detailsRow: {
     border: BaseColors.WHITE,
+    focus: BaseColors.BLUE_00FFFF,
   },
   radioButton: {
     circle: {
@@ -415,6 +553,17 @@ export const HighContrastDarkSemanticColors: IAzureSemanticColors = {
   tabs: {
     hover: BaseColors.GRAY_252423,
   },
+  teachingBubble: {
+    rest: {
+      background: BaseColors.BLUE_00FFFF,
+      border: BaseColors.BLUE_00FFFF,
+      text: BaseColors.BLACK,
+      secondaryBackround: BaseColors.BLACK,
+    },
+    hover: {
+      primaryButtonBackground: BaseColors.BLUE_043862,
+    },
+  },
 };
 
 export const LightSemanticColors: IAzureSemanticColors = {
@@ -422,7 +571,7 @@ export const LightSemanticColors: IAzureSemanticColors = {
   text: {
     list: BaseColors.GRAY_302928,
     heading: BaseColors.GRAY_302928,
-    body: BaseColors.GRAY_302928,
+    body: BaseColors.GRAY_323130,
     bodyHovered: BaseColors.GRAY_201F1E,
     value: BaseColors.GRAY_302928,
     icon: BaseColors.GRAY_302928,
@@ -432,15 +581,35 @@ export const LightSemanticColors: IAzureSemanticColors = {
     hyperlinkHovered: BaseColors.BLUE_004578,
     hyperlinkBackgroundHovered: BaseColors.TRANSPARENT,
     success: BaseColors.GREEN_428000,
-    error: BaseColors.RED_E00B1C,
+    error: BaseColors.RED_A4262C,
     placeholder: BaseColors.GRAY_8A8886,
   },
   statusBar: {
-    okay: BaseColors.GREEN_E6FFCC,
-    error: BaseColors.RED_FDD8DB,
-    warning: BaseColors.ORANGE_FFDFB8,
-    information: BaseColors.BLUE_CCE1FF,
-    upsell: BaseColors.PURPLE_EFDBF5,
+    link: BaseColors.BLUE_106EBE,
+    background: {
+      default: BaseColors.BLUE_F0F6FF,
+      okay: BaseColors.GREEN_F8FFF0,
+      error: BaseColors.RED_FEF0F1,
+      warning: BaseColors.ORANGE_FFF8F0,
+      information: BaseColors.BLUE_F0F6FF,
+      upsell: BaseColors.PURPLE_F9F3FC,
+    },
+    border: {
+      default: BaseColors.BLUE_F0F6FF,
+      okay: BaseColors.GREEN_F8FFF0,
+      error: BaseColors.RED_FEF0F1,
+      warning: BaseColors.ORANGE_FFF8F0,
+      information: BaseColors.BLUE_F0F6FF,
+      upsell: BaseColors.PURPLE_F9F3FC,
+    },
+    icon: {
+      default: BaseColors.BLUE_015CDA,
+      okay: BaseColors.GREEN_57A300,
+      error: BaseColors.RED_E00B1C,
+      warning: BaseColors.ORANGE_DB7500,
+      information: BaseColors.BLUE_015CDA,
+      upsell: BaseColors.PURPLE_8A2DA5,
+    },
   },
   primaryButton: {
     rest: {
@@ -485,13 +654,17 @@ export const LightSemanticColors: IAzureSemanticColors = {
       background: BaseColors.GRAY_EDEBE9,
       border: BaseColors.GRAY_8A8886,
     },
+    focus: {
+      border: BaseColors.GRAY_605E5C,
+    },
   },
   checkBox: {
     rest: {
       border: BaseColors.GRAY_323130,
       background: BaseColors.BLUE_0078D4,
       hover: BaseColors.GRAY_605E5C,
-      focus: BaseColors.BLUE_0078D4,
+      hoverText: BaseColors.GRAY_201F1E,
+      focus: BaseColors.GRAY_605E5C,
       check: BaseColors.WHITE,
     },
     checked: {
@@ -503,20 +676,24 @@ export const LightSemanticColors: IAzureSemanticColors = {
     },
     disabled: {
       border: BaseColors.GRAY_C8C6C4,
+      background: BaseColors.GRAY_C8C6C4,
     },
   },
   controlOutlines: {
     rest: BaseColors.GRAY_323130,
-    disabled: BaseColors.GRAY_C8C6C4,
+    background: BaseColors.WHITE,
+    disabled: BaseColors.GRAY_F3F2F1,
     hover: BaseColors.GRAY_605E5C,
     accent: BaseColors.BLUE_0078D4,
-    error: BaseColors.RED_E00B1C,
+    focus: BaseColors.BLUE_0078D4,
+    error: BaseColors.RED_A4262C,
     dirty: BaseColors.PURPLE_8A2DA5,
   },
   choiceGroup: {
     circle: {
       hover: BaseColors.GRAY_605E5C,
     },
+    focus: BaseColors.GRAY_605E5C,
   },
   item: {
     hover: BaseColors.GRAY_F3F2F1,
@@ -534,6 +711,29 @@ export const LightSemanticColors: IAzureSemanticColors = {
   },
   commandBar: {
     border: BaseColors.GRAY_CCCCCC,
+    button: {
+      root: {
+        color: BaseColors.GRAY_323130,
+      },
+      disabled: {
+        color: BaseColors.GRAY_A19F9D,
+      },
+      focus: {
+        borderColor: BaseColors.GRAY_605E5C,
+      },
+      hover: {
+        background: BaseColors.GRAY_F3F2F1,
+        color: BaseColors.GRAY_201F1E,
+        icon: BaseColors.BLUE_106EBE,
+      },
+      selected: {
+        background: BaseColors.GRAY_EDEBE9,
+        icon: BaseColors.BLUE_005A9E,
+      },
+      selectedHover: {
+        background: BaseColors.GRAY_E1DFDD,
+      },
+    },
   },
   datePicker: {
     rest: {
@@ -546,6 +746,7 @@ export const LightSemanticColors: IAzureSemanticColors = {
   },
   detailsRow: {
     border: BaseColors.GRAY_F3F2F1,
+    focus: BaseColors.WHITE,
   },
   radioButton: {
     circle: {
@@ -563,6 +764,17 @@ export const LightSemanticColors: IAzureSemanticColors = {
   tabs: {
     hover: BaseColors.GRAY_F3F2F1,
   },
+  teachingBubble: {
+    rest: {
+      background: BaseColors.BLUE_0078D4,
+      border: BaseColors.BLUE_0078D4,
+      text: BaseColors.WHITE,
+      secondaryBackround: BaseColors.WHITE,
+    },
+    hover: {
+      primaryButtonBackground: BaseColors.BLUE_DEECF9,
+    },
+  },
 };
 
 export const HighContrastLightSemanticColors: IAzureSemanticColors = {
@@ -575,20 +787,40 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
     value: BaseColors.BLACK,
     icon: BaseColors.BLACK,
     label: BaseColors.BLACK,
-    disabled: BaseColors.GRAY_A19F9D,
+    disabled: BaseColors.RED_800000,
     hyperlink: BaseColors.BLUE_0000CD,
     hyperlinkHovered: BaseColors.WHITE,
     hyperlinkBackgroundHovered: BaseColors.PURPLE_800080,
     success: BaseColors.GREEN_428000,
     error: BaseColors.RED_E00B1C,
-    placeholder: BaseColors.RED_800002,
+    placeholder: BaseColors.RED_800000,
   },
   statusBar: {
-    okay: BaseColors.GREEN_E6FFCC,
-    error: BaseColors.RED_FDD8DB,
-    warning: BaseColors.ORANGE_FFDFB8,
-    information: BaseColors.BLUE_CCE1FF,
-    upsell: BaseColors.PURPLE_EFDBF5,
+    link: BaseColors.BLUE_0000CD,
+    background: {
+      default: BaseColors.TRANSPARENT,
+      okay: BaseColors.TRANSPARENT,
+      error: BaseColors.TRANSPARENT,
+      warning: BaseColors.TRANSPARENT,
+      information: BaseColors.TRANSPARENT,
+      upsell: BaseColors.TRANSPARENT,
+    },
+    border: {
+      default: BaseColors.BLUE_F0F6FF,
+      okay: BaseColors.GREEN_F8FFF0,
+      error: BaseColors.RED_FEF0F1,
+      warning: BaseColors.ORANGE_FFF8F0,
+      information: BaseColors.BLUE_F0F6FF,
+      upsell: BaseColors.PURPLE_F9F3FC,
+    },
+    icon: {
+      default: BaseColors.BLUE_015CDA,
+      okay: BaseColors.GREEN_57A300,
+      error: BaseColors.RED_E00B1C,
+      warning: BaseColors.ORANGE_DB7500,
+      information: BaseColors.BLUE_015CDA,
+      upsell: BaseColors.PURPLE_8A2DA5,
+    },
   },
   primaryButton: {
     rest: {
@@ -606,8 +838,8 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
     },
     disabled: {
       background: BaseColors.GRAY_F3F2F1,
-      border: BaseColors.RED_800002,
-      text: BaseColors.RED_800002,
+      border: BaseColors.RED_800000,
+      text: BaseColors.RED_800000,
     },
     focus: {
       text: BaseColors.BLACK,
@@ -615,7 +847,7 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
   },
   disabledButton: {
     background: BaseColors.WHITE,
-    text: BaseColors.RED_800002,
+    text: BaseColors.RED_800000,
   },
   secondaryButton: {
     rest: {
@@ -633,31 +865,38 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
       background: BaseColors.PURPLE_660166,
       border: BaseColors.PURPLE_660166,
     },
+    focus: {
+      border: BaseColors.GRAY_323130,
+    },
   },
   checkBox: {
     rest: {
       border: BaseColors.GRAY_323130,
       background: BaseColors.BLUE_0078D4,
       hover: BaseColors.GRAY_323130,
-      focus: BaseColors.GRAY_323130,
-      check: BaseColors.WHITE,
+      hoverText: BaseColors.BLACK,
+      focus: BaseColors.BLACK,
+      check: BaseColors.BLACK,
     },
     checked: {
       border: BaseColors.BLUE_0078D4,
-      background: BaseColors.BLUE_0078D4,
+      background: BaseColors.WHITE,
       default: BaseColors.BLUE_106EBE,
-      hoverBackground: BaseColors.BLUE_005A9E,
+      hoverBackground: BaseColors.WHITE,
       hoverBorder: BaseColors.BLUE_005A9E,
     },
     disabled: {
       border: BaseColors.GRAY_C8C6C4,
+      background: BaseColors.TRANSPARENT,
     },
   },
   controlOutlines: {
     rest: BaseColors.BLACK,
-    disabled: BaseColors.GRAY_C8C6C4,
+    background: BaseColors.WHITE,
+    disabled: BaseColors.GRAY_F3F2F1,
     hover: BaseColors.GRAY_605E5C,
     accent: BaseColors.PURPLE_800080,
+    focus: BaseColors.PURPLE_800080,
     error: BaseColors.RED_E00B1C,
     dirty: BaseColors.PURPLE_8A2DA5,
   },
@@ -665,11 +904,12 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
     circle: {
       hover: BaseColors.GRAY_605E5C,
     },
+    focus: BaseColors.GRAY_323130,
   },
   item: {
     hover: BaseColors.PURPLE_800080,
     select: BaseColors.GRAY_EDEBE9,
-    selectHovered: BaseColors.GRAY_E1DFDD,
+    selectHovered: BaseColors.PURPLE_800080,
   },
   shimmer: {
     primary: BaseColors.GRAY_F7F7F7,
@@ -682,6 +922,29 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
   },
   commandBar: {
     border: BaseColors.GRAY_CCCCCC,
+    button: {
+      root: {
+        color: BaseColors.BLACK,
+      },
+      disabled: {
+        color: BaseColors.RED_800000,
+      },
+      focus: {
+        borderColor: 'none',
+      },
+      hover: {
+        background: BaseColors.PURPLE_800080,
+        color: BaseColors.WHITE,
+        icon: BaseColors.WHITE,
+      },
+      selected: {
+        background: BaseColors.PURPLE_800080,
+        icon: BaseColors.WHITE,
+      },
+      selectedHover: {
+        background: BaseColors.PURPLE_800080,
+      },
+    },
   },
   datePicker: {
     rest: {
@@ -694,21 +957,33 @@ export const HighContrastLightSemanticColors: IAzureSemanticColors = {
   },
   detailsRow: {
     border: BaseColors.BLACK,
+    focus: BaseColors.PURPLE_800080,
   },
   radioButton: {
     circle: {
       uncheckedRest: BaseColors.BLACK,
       checkedDisabled: BaseColors.BLACK,
-      borderDisabled: BaseColors.RED_800002,
+      borderDisabled: BaseColors.RED_800000,
     },
     pill: {
-      disabled: BaseColors.RED_800002,
-      uncheckedDisabled: BaseColors.RED_800002,
+      disabled: BaseColors.RED_800000,
+      uncheckedDisabled: BaseColors.RED_800000,
       checkedHover: BaseColors.BLUE_0078D4,
       uncheckedHover: BaseColors.PURPLE_800080,
     },
   },
   tabs: {
     hover: BaseColors.GRAY_F3F2F1,
+  },
+  teachingBubble: {
+    rest: {
+      background: BaseColors.PURPLE_800080,
+      border: BaseColors.PURPLE_800080,
+      text: BaseColors.WHITE,
+      secondaryBackround: BaseColors.WHITE,
+    },
+    hover: {
+      primaryButtonBackground: BaseColors.BLUE_DEECF9,
+    },
   },
 };

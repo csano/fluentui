@@ -1,4 +1,4 @@
-import { ISemanticColors } from 'office-ui-fabric-react';
+import { ISemanticColors } from '@fluentui/react';
 
 export interface IExtendedSemanticColors extends ISemanticColors {
   checkboxBorderChecked: string;
@@ -13,6 +13,7 @@ export interface IExtendedSemanticColors extends ISemanticColors {
   buttonBackgroundHovered: string;
   buttonBackgroundPressed: string;
   ButtonBorderDisabled: string;
+  ButtonBorderFocus: string;
   buttonText: string;
   buttonTextChecked: string;
   buttonTextCheckedHovered: string;
@@ -26,14 +27,29 @@ export interface IExtendedSemanticColors extends ISemanticColors {
   checkBoxCheck: string;
   checkBoxCheckedFocus: string;
   checkBoxCheckHover: string;
+  checkBoxCheckHoverTest: string;
+  checkBoxCheckedDisabledBackground: string;
   checkBoxDisabled: string;
   checkBoxIndeterminateBackground: string;
   checkBoxIndeterminateDefaultChecked: string;
+  callOutBorderStyle: string;
   choiceGroupContainerBorder: string;
   choiceGroupContainerBorderStyle: string;
   choiceGroupUncheckedDotHover: string;
+  choiceGroupFocusBorder: string;
+  commandBarButtonAfterColor: string;
+  commandBarButtonBackgroundHover: string;
+  commandBarButtonBackgroundSelected: string;
+  commandBarButtonBackgroundSelectedHover: string;
+  commandBarButtonIconHover: string;
+  commandBarButtonIconSelected: string;
+  commandBarButtonText: string;
+  commandBarButtonTextHover: string;
+  commandBarButtonTextDisabled: string;
   commandBarBorder: string;
   controlAccent: string;
+  controlBackground: string;
+  controlFocus: string;
   controlOutline: string;
   controlOutlineDisabled: string;
   controlOutlineHovered: string;
@@ -45,7 +61,6 @@ export interface IExtendedSemanticColors extends ISemanticColors {
   errorBackground: string;
   errorText: string;
   focusBorder: string;
-  iconButtonBackground: string;
   iconButtonFill: string;
   iconButtonFillHovered: string;
   inputBackground: string;
@@ -91,20 +106,32 @@ export interface IExtendedSemanticColors extends ISemanticColors {
   radioButtonThumbUncheckedDisabled: string;
   radioButtonThumbCheckedDisabled: string;
   rowBorder: string;
+  rowFocus: string;
+  statusDefaultBackground: string;
+  statusDefaultBorder: string;
   statusErrorBackground: string;
+  statusErrorBorder: string;
   statusErrorIcon: string;
   statusErrorText: string;
   statusInformationBackground: string;
   statusInformationIcon: string;
   statusInformationText: string;
+  statusLink: string;
   statusSuccessBackground: string;
+  statusSuccessBorder: string;
   statusSuccessIcon: string;
   statusSuccessText: string;
   statusWarningBackground: string;
+  statusWarningBorder: string;
   statusWarningIcon: string;
   statusWarningText: string;
   textFieldBackgroundDisabled: string;
   textFieldBorderDisabled: string;
   tabHover: string;
+  teachingBubbleBackground: string;
+  teachingBubbleBorder: string;
+  teachingBubblePrimaryButtonHover: string;
+  teachingBubbleSecondaryBackground: string;
+  teachingBubbleText: string;
   variantBorder: string;
 }

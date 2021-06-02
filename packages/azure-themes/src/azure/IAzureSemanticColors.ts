@@ -1,11 +1,31 @@
 export interface IAzureSemanticColors {
   background: string;
   statusBar: {
-    okay: string;
-    error: string;
-    warning: string;
-    information: string;
-    upsell: string;
+    link: string;
+    background: {
+      default: string;
+      okay: string;
+      error: string;
+      warning: string;
+      information: string;
+      upsell: string;
+    };
+    border: {
+      default: string;
+      okay: string;
+      error: string;
+      warning: string;
+      information: string;
+      upsell: string;
+    };
+    icon: {
+      default: string;
+      okay: string;
+      error: string;
+      warning: string;
+      information: string;
+      upsell: string;
+    };
   };
   text: {
     list: string;
@@ -66,12 +86,16 @@ export interface IAzureSemanticColors {
       background: string;
       border: string;
     };
+    focus: {
+      border: string;
+    };
   };
   checkBox: {
     rest: {
       border: string;
       background: string;
       hover: string;
+      hoverText: string;
       focus: string;
       check: string;
     };
@@ -84,13 +108,16 @@ export interface IAzureSemanticColors {
     };
     disabled: {
       border: string;
+      background: string;
     };
   };
   controlOutlines: {
     rest: string;
+    background: string;
     disabled: string;
     hover: string;
     accent: string; // button in radio, check, et. al.
+    focus: string;
     error: string;
     dirty: string;
   };
@@ -98,6 +125,7 @@ export interface IAzureSemanticColors {
     circle: {
       hover: string;
     };
+    focus: string;
   };
   item: {
     hover: string;
@@ -115,6 +143,29 @@ export interface IAzureSemanticColors {
   };
   commandBar: {
     border: string;
+    button: {
+      root: {
+        color: string;
+      };
+      hover: {
+        background: string;
+        color: string;
+        icon: string;
+      };
+      disabled: {
+        color: string;
+      };
+      focus: {
+        borderColor: string;
+      };
+      selected: {
+        background: string;
+        icon: string;
+      };
+      selectedHover: {
+        background: string;
+      };
+    };
   };
   datePicker: {
     rest: {
@@ -127,6 +178,7 @@ export interface IAzureSemanticColors {
   };
   detailsRow: {
     border: string;
+    focus: string;
   };
   radioButton: {
     circle: {
@@ -143,5 +195,16 @@ export interface IAzureSemanticColors {
   };
   tabs: {
     hover: string;
+  };
+  teachingBubble: {
+    rest: {
+      background: string;
+      border: string;
+      text: string;
+      secondaryBackround: string;
+    };
+    hover: {
+      primaryButtonBackground: string;
+    };
   };
 }

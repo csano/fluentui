@@ -1,5 +1,6 @@
 import { useAutoControlled } from '@fluentui/react-bindings';
 import { shallow } from 'enzyme';
+import { renderHook, act } from '@testing-library/react-hooks';
 import * as React from 'react';
 import * as ReactTestUtils from 'react-dom/test-utils';
 
@@ -20,13 +21,20 @@ const TestComponent: React.FunctionComponent<TestComponentProps> = props => {
   });
 
   return (
-    <input
-      onChange={e => {
-        setValue(e.target.value);
-        if (props.onChange) props.onChange(e.target.value);
-      }}
-      value={value || ''}
-    />
+    <>
+      <input
+        onChange={e => {
+          setValue(e.target.value);
+          if (props.onChange) props.onChange(e.target.value);
+        }}
+        value={value || ''}
+      />
+      <button
+        onClick={() => {
+          setValue(state => `${state}onClick`);
+        }}
+      />
+    </>
   );
 };
 
@@ -55,7 +63,7 @@ describe('useAutoControlled', () => {
     expect(wrapper.find('input').prop('value')).toBe('foo');
   });
 
-  it('handles state updates', () => {
+  it('handles state updates based on values', () => {
     const wrapper = shallow(<TestComponent />);
 
     ReactTestUtils.act(() => {
@@ -63,6 +71,22 @@ describe('useAutoControlled', () => {
     });
 
     expect(wrapper.find('input').prop('value')).toBe('foo');
+  });
+
+  it('handles state updates based on function', () => {
+    const wrapper = shallow(<TestComponent />);
+
+    ReactTestUtils.act(() => {
+      wrapper.find('input').simulate('change', { target: { value: 'bar' } });
+    });
+
+    expect(wrapper.find('input').prop('value')).toBe('bar');
+
+    ReactTestUtils.act(() => {
+      wrapper.find('button').simulate('click');
+    });
+
+    expect(wrapper.find('input').prop('value')).toBe('baronClick');
   });
 
   it('handles state updates with a default value', () => {
@@ -106,5 +130,21 @@ describe('useAutoControlled', () => {
       wrapper.setProps({ value: undefined });
     });
     expect(wrapper.find('input').prop('value')).toBe('foo');
+  });
+
+  it('should update function passing updated value', () => {
+    const { result, rerender } = renderHook(
+      ({ value }) => useAutoControlled<string>({ defaultValue: '', value }),
+      {
+        initialProps: { value: 'a' },
+      },
+    );
+    rerender({ value: 'b' });
+
+    const dispatchSpy = jest.fn();
+    act(() => {
+      result.current[1](dispatchSpy);
+    });
+    expect(dispatchSpy).toBeCalledWith('b');
   });
 });

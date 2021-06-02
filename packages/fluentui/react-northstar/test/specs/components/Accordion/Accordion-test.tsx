@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { keyboardKey } from '@fluentui/keyboard-key';
+import { keyboardKey } from '@fluentui/accessibility';
 
 import { Accordion } from 'src/components/Accordion/Accordion';
-import { isConformant, handlesAccessibility } from 'test/specs/commonTests';
+import { handlesAccessibility, isConformant } from 'test/specs/commonTests';
 import { mountWithProvider, mountWithProviderAndGetComponent, findIntrinsicElement } from 'test/utils';
 import { accordionTitleSlotClassNames } from 'src/components/Accordion/AccordionTitle';
 import { ReactWrapper, CommonWrapper } from 'enzyme';
@@ -48,12 +48,14 @@ const getNonExclusiveItemWithPropArray = (accordion, prop) =>
     .map(node => node.prop('index'));
 
 const getAccordionTitleAtIndex = (accordion, index) =>
-  findIntrinsicElement(accordion, `.${accordionTitleSlotClassNames.contentWrapper}`)
-    .at(index)
-    .getDOMNode();
+  findIntrinsicElement(accordion, `.${accordionTitleSlotClassNames.contentWrapper}`).at(index).getDOMNode();
 
 describe('Accordion', () => {
-  isConformant(Accordion, { constructorName: 'Accordion', autoControlledProps: ['activeIndex'] });
+  isConformant(Accordion, {
+    testPath: __filename,
+    constructorName: 'Accordion',
+    autoControlledProps: ['activeIndex'],
+  });
 
   describe('activeIndex', () => {
     it('has no active item by default when exclusive', () => {

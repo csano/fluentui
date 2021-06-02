@@ -15,6 +15,7 @@ jest.useFakeTimers();
 
 describe('Dropdown', () => {
   isConformant(Dropdown, {
+    testPath: __filename,
     hasAccessibilityProp: false,
     constructorName: 'Dropdown',
     autoControlledProps: ['highlightedIndex', 'open', 'searchQuery', 'activeSelectedIndex', 'value'],
@@ -1146,9 +1147,7 @@ describe('Dropdown', () => {
         defaultValue: [items[0], items[1]],
       });
 
-      findIntrinsicElement(wrapper, `.${dropdownSelectedItemSlotClassNames.icon}`)
-        .at(0)
-        .simulate('click');
+      findIntrinsicElement(wrapper, `.${dropdownSelectedItemSlotClassNames.icon}`).at(0).simulate('click');
 
       expect(getSelectedItemNodes()).toHaveLength(1);
       expect(getSelectedItemNodeAtIndex(0)).toHaveTextContent(items[1]);

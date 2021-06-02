@@ -2,12 +2,22 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as ReactTestUtils from 'react-dom/test-utils';
 
+import { Box } from 'src/components/Box/Box';
 import { Popup, PopupEvents } from 'src/components/Popup/Popup';
 import { popupContentClassName } from 'src/components/Popup/PopupContent';
 import { domEvent, EmptyThemeProvider, mountWithProvider } from '../../../utils';
-import { keyboardKey, KeyNames, SpacebarKey } from '@fluentui/keyboard-key';
+import { keyboardKey, KeyNames, SpacebarKey } from '@fluentui/accessibility';
 import { ReactWrapper } from 'enzyme';
 import { implementsPopperProps } from 'test/specs/commonTests/implementsPopperProps';
+
+import {
+  validateBehavior,
+  ComponentTestFacade,
+  popupBehaviorDefinitionTriggerSlotNotTabbable,
+  popupBehaviorDefinitionTriggerSlotTabbable,
+  popupBehaviorDefinitionTriggerSlotWithTabIndex,
+  popupBehaviorDefinitionPopupSlot,
+} from '@fluentui/a11y-testing';
 
 describe('Popup', () => {
   implementsPopperProps(Popup, {
@@ -46,7 +56,7 @@ describe('Popup', () => {
       <Popup trigger={<span id={triggerId}> text to trigger popup </span>} content={{ id: contentId }} on={onProp} />,
     );
     // check popup open on key press
-    const popupTriggerElement = popup.find(`#${triggerId}`);
+    const popupTriggerElement = popup.find(`span#${triggerId}`);
     popupTriggerElement.simulate(openEvent.event, { keyCode: openEvent.keyCode });
 
     expect(getPopupContent(popup).exists()).toBe(true);
@@ -106,6 +116,16 @@ describe('Popup', () => {
       expect(spy.mock.calls[0][1]).toMatchObject({ open: true });
     });
 
+    test('is not called on click when on is contextmenu and hover', () => {
+      const spy = jest.fn();
+
+      mountWithProvider(<Popup trigger={<button />} content="Hi" onOpenChange={spy} on={['context', 'hover']} />)
+        .find('button')
+        .simulate('click');
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
     // https://github.com/microsoft/fluent-ui-react/pull/619
     test('is called on contextmenu when controlled', () => {
       const spy = jest.fn();
@@ -142,7 +162,7 @@ describe('Popup', () => {
           on="context"
         />,
       );
-      const popupTriggerElement = popup.find(`#${triggerId}`);
+      const popupTriggerElement = popup.find(`span#${triggerId}`);
       popupTriggerElement.simulate('click');
 
       expect(getPopupContent(popup).exists()).toBe(false);
@@ -210,14 +230,14 @@ describe('Popup', () => {
       expect(document.querySelector(`#${contentId2}`)).toBe(null);
 
       ReactTestUtils.act(() => {
-        domEvent.keyDown(`#${triggerId}`, { keyCode: keyboardKey.Enter });
+        domEvent.keyDown(`span#${triggerId}`, { keyCode: keyboardKey.Enter });
       });
 
       expect(document.querySelector(`#${contentId}`)).toBeDefined();
       expect(document.querySelector(`#${contentId2}`)).toBe(null);
 
       ReactTestUtils.act(() => {
-        domEvent.keyDown(`#${triggerId2}`, { keyCode: keyboardKey.Enter });
+        domEvent.keyDown(`span#${triggerId2}`, { keyCode: keyboardKey.Enter });
       });
 
       expect(document.querySelector(`#${contentId}`)).toBe(null);
@@ -230,6 +250,8 @@ describe('Popup', () => {
 
   describe('inline', () => {
     test('renders the content in the document body the inline prop is not provided', () => {
+      // reset body, because then "firstElementChild" was not properly getting right element
+      document.body.innerHTML = '';
       mountWithProvider(<Popup trigger={<button />} content="Content" open />);
       const contentElement = document.body.firstElementChild;
 
@@ -263,7 +285,7 @@ describe('Popup', () => {
       );
 
       // open popup
-      const popupTriggerElement = popup.find(`#${triggerId}`);
+      const popupTriggerElement = popup.find(`span#${triggerId}`);
       popupTriggerElement.simulate('keydown', { keyCode: keyboardKey.Enter });
 
       // when popup open, check that stopPropagation is called when keyboard events are invoked
@@ -277,6 +299,71 @@ describe('Popup', () => {
     });
     test('does not stop when focus is not trapped', () => {
       expectPopupToHandleStopPropagation(false, false);
+    });
+  });
+  describe('PopupBehavior', () => {
+    describe('trigger slot - tabbable - Button', () => {
+      const triggerWithoutTabIndex = <button data-slotid="trigger" />;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup1' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - tabbable - Anchor', () => {
+      const triggerWithoutTabIndex = (
+        <a href="" data-slotid="trigger">
+          triggerLink
+        </a>
+      );
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup1' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - NO tabbabble - Anchor without href', () => {
+      const triggerAnchorWtihoutHref = <a data-slotid="trigger"> triggerLink </a>;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerAnchorWtihoutHref, id: 'popup2' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotNotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - tabbable - Input', () => {
+      const triggerWithoutTabIndex = <input data-slotid="trigger" />;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup1' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - NO tabbabble - Span', () => {
+      const triggerWithoutTabIndex = <span data-slotid="trigger"> text to trigger popup </span>;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup2' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotNotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - tabbable - Box as button', () => {
+      const triggerWithoutTabIndex = <Box data-slotid="trigger" as="button" />;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup2' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotTabbable, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('trigger slot - doesnt override tabIndex if exists', () => {
+      const triggerWithoutTabIndex = <button data-slotid="trigger" tabIndex={-1} />;
+      const testFacade = new ComponentTestFacade(Popup, { trigger: triggerWithoutTabIndex, id: 'popup1' });
+      const errors = validateBehavior(popupBehaviorDefinitionTriggerSlotWithTabIndex, testFacade);
+      expect(errors).toEqual([]);
+    });
+
+    describe('popup content slot ', () => {
+      const triggerWithoutTabIndex = <button tabIndex={-1} />;
+      const testFacade = new ComponentTestFacade(Popup, {
+        trigger: triggerWithoutTabIndex,
+        content: { content: triggerWithoutTabIndex, 'data-slotid': 'popup' },
+        open: true,
+      });
+      const errors = validateBehavior(popupBehaviorDefinitionPopupSlot, testFacade);
+      expect(errors).toEqual([]);
     });
   });
 });

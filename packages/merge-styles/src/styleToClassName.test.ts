@@ -41,6 +41,17 @@ describe('styleToClassName', () => {
     expect(_stylesheet.getRules()).toEqual('.css-0 .foo{background:red;}');
   });
 
+  it('can have child selectors without the selectors wrapper', () => {
+    styleToClassName(
+      {},
+      {
+        '.foo': { background: 'red' },
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual('.css-0 .foo{background:red;}');
+  });
+
   it('can have child selectors with comma', () => {
     styleToClassName(
       {},
@@ -54,6 +65,17 @@ describe('styleToClassName', () => {
     expect(_stylesheet.getRules()).toEqual('.css-0 .foo{background:red;}.css-0 .bar{background:red;}');
   });
 
+  it('can have child selectors with comma without the selectors wrapper', () => {
+    styleToClassName(
+      {},
+      {
+        '.foo, .bar': { background: 'red' },
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual('.css-0 .foo{background:red;}.css-0 .bar{background:red;}');
+  });
+
   it('can have child selectors with comma with pseudo selectors', () => {
     styleToClassName(
       {},
@@ -61,6 +83,17 @@ describe('styleToClassName', () => {
         selectors: {
           ':hover, :active': { background: 'red' },
         },
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual('.css-0:hover{background:red;}.css-0:active{background:red;}');
+  });
+
+  it('can have child selectors with comma with pseudo selectors', () => {
+    styleToClassName(
+      {},
+      {
+        ':hover, :active': { background: 'red' },
       },
     );
 
@@ -84,6 +117,21 @@ describe('styleToClassName', () => {
     );
   });
 
+  it('can have child selectors with comma with @media query', () => {
+    styleToClassName(
+      {},
+      {
+        '@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none)': {
+          background: 'red',
+        },
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual(
+      '@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none){.css-0{background:red;}}',
+    );
+  });
+
   it('can have same element class selectors', () => {
     styleToClassName(
       {},
@@ -97,6 +145,17 @@ describe('styleToClassName', () => {
     expect(_stylesheet.getRules()).toEqual('.css-0.foo{background:red;}');
   });
 
+  it('can have same element class selectors without the selectors wrapper', () => {
+    styleToClassName(
+      {},
+      {
+        '&.foo': [{ background: 'red' }],
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual('.css-0.foo{background:red;}');
+  });
+
   it('can register pseudo selectors', () => {
     const className = styleToClassName(
       {},
@@ -104,6 +163,18 @@ describe('styleToClassName', () => {
         selectors: {
           ':hover': { background: 'red' },
         },
+      },
+    );
+
+    expect(className).toEqual('css-0');
+    expect(_stylesheet.getRules()).toEqual('.css-0:hover{background:red;}');
+  });
+
+  it('can register pseudo selectors without the selectors wrapper', () => {
+    const className = styleToClassName(
+      {},
+      {
+        ':hover': { background: 'red' },
       },
     );
 
@@ -472,5 +543,64 @@ describe('styleToClassName with specificityMultiplier', () => {
 
     expect(className).toEqual('css-0');
     expect(_stylesheet.getRules()).toEqual('.class1{background:red;}');
+  });
+
+  it('handles numeric 0 in props with shorthand syntax (margin, padding)', () => {
+    styleToClassName(
+      {},
+      {
+        margin: 0,
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual(
+      '.css-0{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}',
+    );
+  });
+
+  it('handles calc(...) in props with shorthand syntax (margin, padding)', () => {
+    styleToClassName(
+      {},
+      {
+        padding: 'calc(24px / 2) 0',
+        margin: '0 2px  calc(2 * (var(--a) + var(--b))) ',
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual(
+      '.css-0{' +
+        'padding-top:calc(24px / 2);' +
+        'padding-right:0;' +
+        'padding-bottom:calc(24px / 2);' +
+        'padding-left:0;' +
+        'margin-top:0;' +
+        'margin-right:2px;' +
+        'margin-bottom:calc(2 * (var(--a) + var(--b)));' +
+        'margin-left:2px;' +
+        '}',
+    );
+  });
+
+  it('handles !important in props with shorthand syntax (margin, padding)', () => {
+    styleToClassName(
+      {},
+      {
+        padding: '42px !important',
+        margin: ' 0 2px calc(2 * (var(--a) + var(--b)))  !important ',
+      },
+    );
+
+    expect(_stylesheet.getRules()).toEqual(
+      '.css-0{' +
+        'padding-top:42px !important;' +
+        'padding-right:42px !important;' +
+        'padding-bottom:42px !important;' +
+        'padding-left:42px !important;' +
+        'margin-top:0 !important;' +
+        'margin-right:2px !important;' +
+        'margin-bottom:calc(2 * (var(--a) + var(--b))) !important;' +
+        'margin-left:2px !important;' +
+        '}',
+    );
   });
 });

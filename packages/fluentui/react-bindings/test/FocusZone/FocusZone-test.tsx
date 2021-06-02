@@ -1,9 +1,14 @@
-import { FocusZoneDirection, FocusZoneTabbableElements, IS_FOCUSABLE_ATTRIBUTE } from '@fluentui/accessibility';
+import {
+  FocusZoneDirection,
+  FocusZoneTabbableElements,
+  IS_FOCUSABLE_ATTRIBUTE,
+  getCode,
+  keyboardKey,
+} from '@fluentui/accessibility';
 import { FocusZone } from '@fluentui/react-bindings';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as ReactTestUtils from 'react-dom/test-utils';
-import { getCode, keyboardKey } from '@fluentui/keyboard-key';
 
 describe('FocusZone', () => {
   let lastFocusedElement: HTMLElement | undefined;
@@ -1508,7 +1513,7 @@ describe('FocusZone', () => {
   });
 
   it('only adds outerzones to be updated for tab changes', () => {
-    const activeZones = FocusZone.getOuterZones();
+    const activeZones = FocusZone.outerZones.getOutZone(window)?.size || 0;
 
     host = document.createElement('div');
 
@@ -1522,11 +1527,11 @@ describe('FocusZone', () => {
       host,
     );
 
-    expect(FocusZone.getOuterZones()).toEqual(activeZones + 1);
+    expect(FocusZone.outerZones.getOutZone(window)?.size).toEqual(activeZones + 1);
 
     ReactDOM.unmountComponentAtNode(host);
 
-    expect(FocusZone.getOuterZones()).toEqual(activeZones);
+    expect(FocusZone.outerZones.getOutZone(window)?.size).toEqual(activeZones);
   });
 
   describe('restores focus', () => {

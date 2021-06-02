@@ -1,4 +1,11 @@
-import { Accessibility, popupBehavior, PopupBehaviorProps } from '@fluentui/accessibility';
+import {
+  Accessibility,
+  popupBehavior,
+  PopupBehaviorProps,
+  getCode,
+  keyboardKey,
+  SpacebarKey,
+} from '@fluentui/accessibility';
 import {
   AutoFocusZoneProps,
   FocusTrapZoneProps,
@@ -6,19 +13,19 @@ import {
   useAutoControlled,
   useTelemetry,
   useFluentContext,
+  useTriggerElement,
 } from '@fluentui/react-bindings';
 import { EventListener } from '@fluentui/react-component-event-listener';
 import { NodeRef, Unstable_NestingAuto } from '@fluentui/react-component-nesting-registry';
 import { handleRef, Ref } from '@fluentui/react-component-ref';
 import * as customPropTypes from '@fluentui/react-proptypes';
 import * as PopperJs from '@popperjs/core';
-import { getCode, keyboardKey, SpacebarKey } from '@fluentui/keyboard-key';
 import * as _ from 'lodash';
 import * as PropTypes from 'prop-types';
 import * as React from 'react';
+import { elementContains, setVirtualParent } from '@fluentui/dom-utilities';
 
 import {
-  childrenExist,
   ChildrenComponentProps,
   ContentComponentProps,
   StyledComponentProps,
@@ -28,11 +35,19 @@ import {
   setWhatInputSource,
 } from '../../utils';
 import { ComponentEventHandler, FluentComponentStaticProps, ShorthandValue } from '../../types';
-import { ALIGNMENTS, POSITIONS, Popper, PositioningProps, PopperChildrenProps } from '../../utils/positioner';
+import {
+  ALIGNMENTS,
+  POSITIONS,
+  createReferenceFromClick,
+  Popper,
+  PositioningProps,
+  PopperChildrenProps,
+  AutoSize,
+  AUTOSIZES,
+} from '../../utils/positioner';
 import { PopupContent, PopupContentProps } from './PopupContent';
 
 import { createShorthandFactory } from '../../utils/factories';
-import { createReferenceFromContextClick } from './createReferenceFromContextClick';
 import { isRightClick } from '../../utils/isRightClick';
 import { PortalInner } from '../Portal/PortalInner';
 import { Animation } from '../Animation/Animation';
@@ -97,7 +112,7 @@ export interface PopupProps
   target?: HTMLElement;
 
   /** Element to be rendered in-place where the popup is defined. */
-  trigger?: React.ReactNode;
+  trigger?: JSX.Element;
 
   /** Whether the trigger should be tabbable */
   tabbableTrigger?: boolean;
@@ -130,7 +145,6 @@ export const Popup: React.FC<PopupProps> &
     align,
     autoFocus,
     inline,
-    children,
     contentRef,
     flipBoundary,
     on,
@@ -147,7 +161,9 @@ export const Popup: React.FC<PopupProps> &
     target,
     trapFocus,
     trigger,
+    unstable_disableTether,
     unstable_pinned,
+    autoSize,
   } = props;
 
   const [open, setOpen] = useAutoControlled({
@@ -195,12 +211,12 @@ export const Popup: React.FC<PopupProps> &
       },
     },
     mapPropsToBehavior: () => ({
-      disabled: false, // definition has this prop, but `Popup` doesn't support it
       isOpenedByRightClick,
       on,
       trapFocus,
       tabbableTrigger,
       trigger: trigger as any,
+      inline,
     }),
     rtl: context.rtl,
   });
@@ -208,6 +224,7 @@ export const Popup: React.FC<PopupProps> &
   const handleDocumentClick = (getRefs: Function) => (e: MouseEvent) => {
     if (isOpenedByRightClick && isOutsidePopupElement(getRefs(), e)) {
       trySetOpen(false, e);
+      rightClickReferenceObject.current = null;
       return;
     }
 
@@ -318,10 +335,12 @@ export const Popup: React.FC<PopupProps> &
         setPopupOpen(false, e);
         _.invoke(triggerElement, 'props.onMouseLeave', e, ...args);
       };
-      triggerProps.onClick = (e, ...args) => {
-        setPopupOpen(true, e);
-        _.invoke(triggerElement, 'props.onClick', e, ...args);
-      };
+      if (!_.includes(normalizedOn, 'context')) {
+        triggerProps.onClick = (e, ...args) => {
+          setPopupOpen(true, e);
+          _.invoke(triggerElement, 'props.onClick', e, ...args);
+        };
+      }
       triggerProps.onBlur = (e, ...args) => {
         if (shouldBlurClose(e)) {
           trySetOpen(false, e);
@@ -370,12 +389,13 @@ export const Popup: React.FC<PopupProps> &
     return contentHandlerProps;
   };
 
-  const shouldBlurClose = e => {
-    return (
-      !e.currentTarget ||
-      !popupContentRef.current ||
-      (!e.currentTarget.contains(e.relatedTarget) && !popupContentRef.current.contains(e.relatedTarget))
-    );
+  const shouldBlurClose = (e: React.FocusEvent) => {
+    const relatedTarget = e.relatedTarget as Node;
+    const isInsideContent = elementContains(popupContentRef.current, relatedTarget as HTMLElement);
+    const isInsideTarget = elementContains(e.currentTarget as HTMLElement, relatedTarget as HTMLElement);
+    // When clicking in the popup content that has no tabIndex focus goes to body
+    // We shouldn't close the popup in this case
+    return relatedTarget && !(isInsideContent || isInsideTarget);
   };
 
   const renderPopperChildren = classes => ({ placement, scheduleUpdate }: PopperChildrenProps) => {
@@ -389,6 +409,7 @@ export const Popup: React.FC<PopupProps> &
           pointerRef: pointerTargetRef,
           trapFocus,
           autoFocus,
+          autoSize,
           className: classes,
         }),
       overrideProps: getContentProps,
@@ -408,14 +429,28 @@ export const Popup: React.FC<PopupProps> &
               {popupContent}
             </Ref>
 
-            <EventListener listener={handleDocumentClick(getRefs)} target={context.target} type="click" capture />
-            <EventListener listener={handleDocumentClick(getRefs)} target={context.target} type="contextmenu" capture />
-            <EventListener listener={handleDocumentKeyDown(getRefs)} target={context.target} type="keydown" capture />
-
-            {isOpenedByRightClick && (
+            {context.target && (
               <>
-                <EventListener listener={dismissOnScroll} target={context.target} type="wheel" capture />
-                <EventListener listener={dismissOnScroll} target={context.target} type="touchmove" capture />
+                <EventListener listener={handleDocumentClick(getRefs)} target={context.target} type="click" capture />
+                <EventListener
+                  listener={handleDocumentClick(getRefs)}
+                  target={context.target}
+                  type="contextmenu"
+                  capture
+                />
+                <EventListener
+                  listener={handleDocumentKeyDown(getRefs)}
+                  target={context.target}
+                  type="keydown"
+                  capture
+                />
+
+                {isOpenedByRightClick && (
+                  <>
+                    <EventListener listener={dismissOnScroll} target={context.target} type="wheel" capture />
+                    <EventListener listener={dismissOnScroll} target={context.target} type="touchmove" capture />
+                  </>
+                )}
               </>
             )}
           </>
@@ -425,7 +460,10 @@ export const Popup: React.FC<PopupProps> &
   };
 
   const dismissOnScroll = (e: TouchEvent | WheelEvent) => {
-    trySetOpen(false, e);
+    // we only need to dismiss if the scroll happens outside the popup
+    if (!popupContentRef.current.contains(e.target as Node)) {
+      trySetOpen(false, e);
+    }
   };
 
   const trySetOpen = (
@@ -470,17 +508,17 @@ export const Popup: React.FC<PopupProps> &
    * Can be either trigger DOM element itself or the element inside it.
    */
   const updateTriggerFocusableRef = () => {
-    const activeDocument: HTMLDocument = context.target;
-    const activeElement = activeDocument.activeElement;
-
-    triggerFocusableRef.current =
-      triggerRef.current && triggerRef.current.contains(activeElement)
-        ? (activeElement as HTMLElement)
-        : triggerRef.current;
+    const activeElement = context.target?.activeElement;
+    if (activeElement) {
+      triggerFocusableRef.current =
+        triggerRef.current && elementContains(triggerRef.current, activeElement as HTMLElement)
+          ? (activeElement as HTMLElement)
+          : triggerRef.current;
+    }
   };
 
   const updateContextPosition = (nativeEvent: MouseEvent) => {
-    rightClickReferenceObject.current = nativeEvent ? createReferenceFromContextClick(nativeEvent) : null;
+    rightClickReferenceObject.current = nativeEvent ? createReferenceFromClick(nativeEvent) : null;
   };
 
   if (process.env.NODE_ENV !== 'production') {
@@ -508,28 +546,45 @@ export const Popup: React.FC<PopupProps> &
     }
   });
 
-  const triggerNode: React.ReactNode | null = childrenExist(children) ? children : trigger;
+  const triggerNode = useTriggerElement(props);
   const triggerProps = getTriggerProps(triggerNode);
+
+  React.useEffect(() => {
+    if (open) {
+      setVirtualParent(popupContentRef.current, triggerRef.current);
+    }
+
+    return () => {
+      if (open && popupContentRef.current) {
+        setVirtualParent(popupContentRef.current, null);
+      }
+    };
+  }, [open]);
 
   const contentElement = (
     <Animation mountOnEnter unmountOnExit visible={open} name={open ? 'popup-show' : 'popup-hide'}>
-      {({ classes }) => (
-        <Popper
-          pointerTargetRef={pointerTargetRef}
-          align={align}
-          flipBoundary={flipBoundary}
-          popperRef={popperRef}
-          position={position}
-          positionFixed={positionFixed}
-          offset={offset}
-          overflowBoundary={overflowBoundary}
-          rtl={context.rtl}
-          unstable_pinned={unstable_pinned}
-          targetRef={rightClickReferenceObject.current || target || triggerRef}
-        >
-          {renderPopperChildren(classes)}
-        </Popper>
-      )}
+      {({ classes }) => {
+        const content = (
+          <Popper
+            pointerTargetRef={pointerTargetRef}
+            align={align}
+            flipBoundary={flipBoundary}
+            popperRef={popperRef}
+            position={position}
+            positionFixed={positionFixed}
+            offset={offset}
+            overflowBoundary={overflowBoundary}
+            rtl={context.rtl}
+            unstable_disableTether={unstable_disableTether}
+            unstable_pinned={unstable_pinned}
+            autoSize={autoSize}
+            targetRef={rightClickReferenceObject.current || target || triggerRef}
+          >
+            {renderPopperChildren(classes)}
+          </Popper>
+        );
+        return inline ? content : <PortalInner mountNode={mountNode}>{content}</PortalInner>;
+      }}
     </Animation>
   );
   const triggerElement = triggerNode && (
@@ -541,7 +596,7 @@ export const Popup: React.FC<PopupProps> &
   const element = (
     <>
       {triggerElement}
-      {inline ? contentElement : <PortalInner mountNode={mountNode}>{contentElement}</PortalInner>}
+      {contentElement}
     </>
   );
   setEnd();
@@ -590,7 +645,9 @@ Popup.propTypes = {
   target: PropTypes.any,
   trigger: customPropTypes.every([customPropTypes.disallow(['children']), PropTypes.any]),
   tabbableTrigger: PropTypes.bool,
+  unstable_disableTether: PropTypes.oneOf([true, false, 'all']),
   unstable_pinned: PropTypes.bool,
+  autoSize: PropTypes.oneOf<AutoSize>(AUTOSIZES),
   content: customPropTypes.shorthandAllowingChildren,
   contentRef: customPropTypes.ref,
   trapFocus: PropTypes.oneOfType([PropTypes.bool, PropTypes.object]),

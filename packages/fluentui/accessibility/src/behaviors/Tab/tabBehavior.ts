@@ -1,4 +1,4 @@
-import { keyboardKey, SpacebarKey } from '@fluentui/keyboard-key';
+import { keyboardKey, SpacebarKey } from '../../keyboard-key';
 
 import { IS_FOCUSABLE_ATTRIBUTE } from '../../attributes';
 import { Accessibility, AccessibilityAttributes } from '../../types';
@@ -44,7 +44,7 @@ export const tabBehavior: Accessibility<TabBehaviorProps> = props => ({
   },
 });
 
-type TabBehaviorProps = {
+export type TabBehaviorProps = {
   /** Indicates if tab is selected. */
   active?: boolean;
   /** Indicates if tab is disabled. */

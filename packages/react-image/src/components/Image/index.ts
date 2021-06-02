@@ -1,4 +1,5 @@
 export * from './Image.types';
-export * from './ImageBase';
 export * from './Image';
+export * from './renderImage';
 export * from './useImage';
+export * from './useImageStyles';

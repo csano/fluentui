@@ -1,12 +1,16 @@
-import * as path from 'path';
-import { isConformant } from '@fluentui/react-conformance';
 import { ToggleButton } from './ToggleButton';
+import { isConformant } from '../../common/isConformant';
+import { validateBehavior, ComponentTestFacade, toggleButtonBehaviorDefinition } from '@fluentui/a11y-testing';
 
 describe('ToggleButton', () => {
   isConformant({
-    componentPath: path.join(__dirname, 'ToggleButton.tsx'),
     Component: ToggleButton,
     displayName: 'ToggleButton',
-    disabledTests: ['has-docblock', 'as-renders-html', 'as-passes-as-value', 'as-renders-react-class', 'as-renders-fc'],
+  });
+
+  xdescribe('AccesibilityButtonBehavior', () => {
+    const testFacade = new ComponentTestFacade(ToggleButton, {});
+    const errors = validateBehavior(toggleButtonBehaviorDefinition, testFacade);
+    expect(errors).toEqual([]);
   });
 });

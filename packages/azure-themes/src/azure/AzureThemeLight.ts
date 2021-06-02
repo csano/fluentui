@@ -1,8 +1,9 @@
-import { createTheme, ITheme } from 'office-ui-fabric-react';
+import { createTheme, Theme } from '@fluentui/react';
 import { CommonSemanticColors, LightSemanticColors } from './AzureColors';
 import { IExtendedSemanticColors } from './IExtendedSemanticColors';
 import { FontSizes } from './AzureType';
 import * as StyleConstants from './Constants';
+import { AzureStyleSettings } from './AzureStyleSettings';
 
 const lightExtendedSemanticColors: Partial<IExtendedSemanticColors> = {
   bodyBackground: LightSemanticColors.background,
@@ -16,6 +17,7 @@ const lightExtendedSemanticColors: Partial<IExtendedSemanticColors> = {
   buttonBackgroundHovered: LightSemanticColors.secondaryButton.hover.background,
   buttonBackgroundPressed: LightSemanticColors.secondaryButton.pressed.background,
   ButtonBorderDisabled: LightSemanticColors.disabledButton.background,
+  ButtonBorderFocus: LightSemanticColors.secondaryButton.focus.border,
   buttonText: LightSemanticColors.secondaryButton.rest.text,
   buttonTextChecked: LightSemanticColors.secondaryButton.pressed.border,
   buttonTextCheckedHovered: LightSemanticColors.secondaryButton.hover.border,
@@ -30,10 +32,13 @@ const lightExtendedSemanticColors: Partial<IExtendedSemanticColors> = {
   checkBoxCheck: LightSemanticColors.checkBox.rest.check,
   checkBoxCheckedFocus: LightSemanticColors.checkBox.rest.focus,
   checkBoxCheckHover: LightSemanticColors.checkBox.rest.hover,
+  checkBoxCheckHoverTest: LightSemanticColors.checkBox.rest.hoverText,
+  checkBoxCheckedDisabledBackground: LightSemanticColors.checkBox.disabled.background,
   checkBoxDisabled: LightSemanticColors.checkBox.disabled.border,
   checkBoxIndeterminateBackground: LightSemanticColors.checkBox.rest.check,
   checkBoxIndeterminateDefaultChecked: LightSemanticColors.checkBox.checked.default,
   choiceGroupUncheckedDotHover: LightSemanticColors.choiceGroup.circle.hover,
+  choiceGroupFocusBorder: LightSemanticColors.choiceGroup.focus,
   commandBarBorder: LightSemanticColors.commandBar.border,
   datePickerDisabledBorder: LightSemanticColors.datePicker.disabled.border,
   datePickerSelectionBackground: LightSemanticColors.datePicker.rest.selected,
@@ -67,7 +72,7 @@ const lightExtendedSemanticColors: Partial<IExtendedSemanticColors> = {
   primaryButtonBackgroundHovered: LightSemanticColors.primaryButton.hover.background,
   primaryButtonBackgroundPressed: LightSemanticColors.primaryButton.pressed.background,
   primaryButtonBorder: LightSemanticColors.primaryButton.rest.border,
-  primaryButtonBorderDisabled: LightSemanticColors.primaryButton.disabled.border, //
+  primaryButtonBorderDisabled: LightSemanticColors.primaryButton.disabled.border,
   primaryButtonText: LightSemanticColors.primaryButton.rest.text,
   primaryButtonTextDisabled: LightSemanticColors.disabledButton.text,
   primaryButtonTextFocused: LightSemanticColors.primaryButton.focus.text,
@@ -82,43 +87,69 @@ const lightExtendedSemanticColors: Partial<IExtendedSemanticColors> = {
   radioButtonThumbUncheckedDisabled: LightSemanticColors.radioButton.pill.disabled,
   radioButtonThumbCheckedDisabled: LightSemanticColors.radioButton.circle.checkedDisabled,
   rowBorder: LightSemanticColors.detailsRow.border,
+  rowFocus: LightSemanticColors.detailsRow.focus,
   tabHover: LightSemanticColors.tabs.hover,
   variantBorder: CommonSemanticColors.dividers.lineSeparator,
   // extended
+  commandBarButtonAfterColor: LightSemanticColors.commandBar.button.focus.borderColor,
+  commandBarButtonBackgroundHover: LightSemanticColors.commandBar.button.hover.background,
+  commandBarButtonBackgroundSelected: LightSemanticColors.commandBar.button.selected.background,
+  commandBarButtonBackgroundSelectedHover: LightSemanticColors.commandBar.button.selectedHover.background,
+  commandBarButtonIconHover: LightSemanticColors.commandBar.button.hover.icon,
+  commandBarButtonIconSelected: LightSemanticColors.commandBar.button.selected.icon,
+  commandBarButtonText: LightSemanticColors.commandBar.button.root.color,
+  commandBarButtonTextDisabled: LightSemanticColors.commandBar.button.disabled.color,
+  commandBarButtonTextHover: LightSemanticColors.commandBar.button.hover.color,
   controlAccent: LightSemanticColors.controlOutlines.accent,
+  controlBackground: LightSemanticColors.controlOutlines.background,
+  controlFocus: LightSemanticColors.controlOutlines.focus,
   controlOutline: LightSemanticColors.controlOutlines.rest,
   controlOutlineDisabled: LightSemanticColors.controlOutlines.disabled,
   controlOutlineHovered: LightSemanticColors.controlOutlines.hover,
-  iconButtonBackground: StyleConstants.transparent,
   iconButtonFill: LightSemanticColors.primaryButton.rest.background,
   iconButtonFillHovered: LightSemanticColors.primaryButton.hover.background,
   labelText: LightSemanticColors.text.label,
-  statusErrorBackground: LightSemanticColors.statusBar.error,
+  statusDefaultBackground: LightSemanticColors.statusBar.background.default,
+  statusDefaultBorder: LightSemanticColors.statusBar.border.default,
+  statusErrorBackground: LightSemanticColors.statusBar.background.error,
+  statusErrorBorder: LightSemanticColors.statusBar.border.error,
   statusErrorText: LightSemanticColors.text.body,
-  statusErrorIcon: CommonSemanticColors.icons.error,
-  statusInformationBackground: LightSemanticColors.statusBar.information,
+  statusErrorIcon: LightSemanticColors.statusBar.icon.error,
+  statusInformationBackground: LightSemanticColors.statusBar.background.information,
   statusInformationText: LightSemanticColors.text.body,
-  statusInformationIcon: CommonSemanticColors.icons.information,
-  statusSuccessBackground: LightSemanticColors.statusBar.okay,
+  statusInformationIcon: LightSemanticColors.statusBar.icon.default,
+  statusSuccessBackground: LightSemanticColors.statusBar.background.okay,
+  statusSuccessBorder: LightSemanticColors.statusBar.border.okay,
   statusSuccessText: LightSemanticColors.text.body,
-  statusSuccessIcon: CommonSemanticColors.icons.okay,
-  statusWarningBackground: LightSemanticColors.statusBar.warning,
+  statusSuccessIcon: LightSemanticColors.statusBar.icon.okay,
+  statusLink: LightSemanticColors.statusBar.link,
+  statusWarningBackground: LightSemanticColors.statusBar.background.warning,
+  statusWarningBorder: LightSemanticColors.statusBar.border.warning,
   statusWarningText: LightSemanticColors.text.body,
-  statusWarningIcon: CommonSemanticColors.icons.warning,
+  statusWarningIcon: LightSemanticColors.statusBar.icon.warning,
+  teachingBubbleBackground: LightSemanticColors.teachingBubble.rest.background,
+  teachingBubbleBorder: LightSemanticColors.teachingBubble.rest.border,
+  teachingBubblePrimaryButtonHover: LightSemanticColors.teachingBubble.hover.primaryButtonBackground,
+  teachingBubbleSecondaryBackground: LightSemanticColors.teachingBubble.rest.secondaryBackround,
+  teachingBubbleText: LightSemanticColors.teachingBubble.rest.text,
   textFieldBorderDisabled: LightSemanticColors.disabledButton.background,
 
   // temporary work around for high contrast themes
   choiceGroupContainerBorder: '0px',
+  callOutBorderStyle: 'solid',
   choiceGroupContainerBorderStyle: 'solid',
   listUnderline: 'none',
   linkBorderStyle: 'dashed',
 };
 
-export const AzureThemeLight: ITheme = createTheme({
+export const AzureThemeLight: Theme = createTheme({
   fonts: {
     medium: {
       fontFamily: StyleConstants.fontFamily,
-      fontSize: FontSizes.size12,
+      fontSize: FontSizes.size13,
+    },
+    large: {
+      fontSize: FontSizes.size14,
     },
   },
   palette: {
@@ -134,3 +165,5 @@ export const AzureThemeLight: ITheme = createTheme({
   },
   semanticColors: lightExtendedSemanticColors,
 });
+
+AzureThemeLight.components = AzureStyleSettings(AzureThemeLight);

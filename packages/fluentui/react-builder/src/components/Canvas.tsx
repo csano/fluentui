@@ -1,17 +1,17 @@
 import * as React from 'react';
-import * as _ from 'lodash';
-
 import Frame, { FrameContextConsumer } from 'react-frame-component';
 
 import { DebugSelector, FiberNavigator, Provider, teamsTheme } from '@fluentui/react-northstar';
-import { JSONTreeElement, DesignerMode } from './types';
+import { JSONTreeElement } from './types';
 import { EventListener } from '@fluentui/react-component-event-listener';
 import { fiberNavFindJSONTreeElement, fiberNavFindOwnerInJSONTree, renderJSONTreeToJSXElement } from '../config';
 import { DebugFrame } from './DebugFrame';
 import { DropSelector } from './DropSelector';
-import { AbilityAttributesValidator, AccessibilityErrors } from './AbilityAttributesValidator';
-import { ErrorFrame } from './ErrorFrame';
-import { ReaderText } from './ReaderText';
+import { ReaderNarration } from './ReaderNarration';
+
+const pkg = require('../../package.json');
+
+const axeVersion = pkg.dependencies['axe-core'];
 
 export type CanvasProps = {
   draggingElement: JSONTreeElement;
@@ -21,20 +21,19 @@ export type CanvasProps = {
   onDropPositionChange: (dropParent: JSONTreeElement, dropIndex: number) => void;
   onMouseMove?: ({ clientX, clientY }: { clientX: number; clientY: number }) => void;
   onMouseUp?: () => void;
+  onKeyDown?: (e: KeyboardEvent) => void;
   onSelectComponent?: (jsonTreeElement: JSONTreeElement) => void;
   selectedComponent?: JSONTreeElement;
   onCloneComponent?: ({ clientX, clientY }: { clientX: number; clientY: number }) => void;
   onMoveComponent?: ({ clientX, clientY }: { clientX: number; clientY: number }) => void;
-  onDeleteComponent?: () => void;
+  onDeleteSelectedComponent?: () => void;
   onGoToParentComponent?: () => void;
   renderJSONTreeElement?: (jsonTreeElement: JSONTreeElement) => JSONTreeElement;
   enabledVirtualCursor?: boolean;
   style?: React.CSSProperties;
-  mode: DesignerMode;
-  onMessage: (message: string) => void;
   role?: string;
-  accessibilityErrors: AccessibilityErrors;
-  onAccessibilityErrorsChanged: (errors: AccessibilityErrors) => void;
+  inUseMode?: boolean;
+  setHeaderMessage?: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export const Canvas: React.FunctionComponent<CanvasProps> = ({
@@ -45,33 +44,27 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
   onDropPositionChange,
   onMouseMove,
   onMouseUp,
+  onKeyDown,
   onSelectComponent,
   selectedComponent,
   onCloneComponent,
   onMoveComponent,
-  onDeleteComponent,
+  onDeleteSelectedComponent,
   onGoToParentComponent,
   renderJSONTreeElement,
   enabledVirtualCursor,
   style,
-  mode,
-  onMessage,
   role,
-  accessibilityErrors,
-  onAccessibilityErrorsChanged,
+  inUseMode,
+  setHeaderMessage,
 }) => {
-  const iframeId = React.useMemo(
-    () =>
-      `frame-${Math.random()
-        .toString(36)
-        .slice(2)}`,
-    [],
-  );
+  const [hideDropSelector, setHideDropSelector] = React.useState(false);
 
-  const iframeRef = React.useRef<HTMLIFrameElement>();
-  const [focusableElements, setFocusableElements] = React.useState([]);
-  const [currentIndex, setIndex] = React.useState(0);
-  const [currentFocusedNode, setCurrentFocusedNode] = React.useState(null);
+  const iframeId = React.useMemo(() => `frame-${Math.random().toString(36).slice(2)}`, []);
+
+  const [virtualCursorElements, setVirtualCursorElements] = React.useState<HTMLElement[]>([]);
+  const [vcIndex, setVcIndex] = React.useState(0);
+  const [focusedVcElement, setFocusedVcElement] = React.useState<HTMLElement>(null);
 
   const iframeCoordinatesToWindowCoordinates = React.useCallback(
     (e: MouseEvent) => {
@@ -88,9 +81,10 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
 
   const handleMouseMove = React.useCallback(
     (e: MouseEvent) => {
+      hideDropSelector && setHideDropSelector(false);
       onMouseMove?.(iframeCoordinatesToWindowCoordinates(e));
     },
-    [iframeCoordinatesToWindowCoordinates, onMouseMove],
+    [iframeCoordinatesToWindowCoordinates, onMouseMove, hideDropSelector],
   );
 
   const handleMouseUp = React.useCallback(
@@ -100,89 +94,48 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
       e.preventDefault();
       e.stopPropagation();
 
+      hideDropSelector && setHideDropSelector(false);
       onMouseUp();
     },
-    [onMouseUp],
-  );
-
-  const blur = React.useCallback(() => {
-    if (!iframeRef.current) return;
-
-    const document = iframeRef.current.contentDocument;
-    document.body.style.outline = '';
-    document.body.style.outlineOffset = '';
-    onMessage('');
-  }, [onMessage]);
-
-  const handleFocus = React.useCallback(
-    (ev: FocusEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-
-      const document = iframeRef.current?.contentDocument;
-      const fiberNav = FiberNavigator.fromDOMNode(ev.target);
-      const parent = fiberNavFindOwnerInJSONTree(fiberNav, jsonTree);
-
-      // when the selected element was not created by the user, the focus is in the body
-      // therefore we need to warn the user because, in this case, the reader can read the entire document
-      if (document && !parent?.props?.['data-builder-id']) {
-        document.body.style.outline = '4px dashed red';
-        document.body.style.outlineOffset = '-4px';
-        onMessage('Warning: Focus on body. Developer might need to handle it and focus relevant element instead.');
-      } else {
-        blur();
-      }
-    },
-
-    [jsonTree, onMessage, blur],
-  );
-
-  const handleBlur = React.useCallback(
-    (ev: FocusEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      blur();
-    },
-
-    [blur],
+    [onMouseUp, hideDropSelector],
   );
 
   const handleKeyDown = React.useCallback(
-    e => {
-      switch (e.keyCode) {
-        case 40:
-        case 38:
-          focusableElements[currentIndex].classList.remove('virtual-focused');
-          setIndex(idx => {
-            const modifier = e.keyCode === 40 ? 1 : -1;
-            const nextIndex = idx + modifier;
-            // if nextIndex is bigger than number of elements move it to 0
-            // if nextIndex is smaller than 0 move it to the lastElement
-            // otherwise move to the nextIndex
-            const newIndex =
-              nextIndex >= focusableElements.length ? 0 : nextIndex < 0 ? focusableElements.length - 1 : nextIndex;
-            focusableElements[newIndex].classList.add('virtual-focused');
-            setCurrentFocusedNode(focusableElements[newIndex]);
-            return newIndex;
-          });
-          break;
-        case 13:
-          focusableElements[currentIndex].click();
+    event => {
+      switch (
+        event.code // Begin switch 1
+      ) {
+        case 'Period': // Moves to the next element
+        case 'Comma': // Moves to the previous element
+          if (event.ctrlKey) {
+            // Begin if 1
+            virtualCursorElements[vcIndex].classList.remove('virtual-focused');
+            setVcIndex(index => {
+              const tempIndex = index + (event.code === 'Period' ? 1 : -1);
+
+              // Ensure looping, i.e., that the next element of the last element is the first element, and that the previous element of the first element is the last element
+              const newIndex =
+                tempIndex >= virtualCursorElements.length
+                  ? 0
+                  : tempIndex < 0
+                  ? virtualCursorElements.length - 1
+                  : tempIndex;
+
+              virtualCursorElements[newIndex].classList.add('virtual-focused');
+              setFocusedVcElement(virtualCursorElements[newIndex]);
+              return newIndex;
+            }); // End setVcIndex
+          } // End if 1
           return;
-        case 121:
-          if (e.shiftKey) {
-            const eve = document.createEvent('MouseEvents');
-            eve.initMouseEvent('contextmenu', true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 2, null);
-            focusableElements[currentIndex].dispatchEvent(eve);
-            return;
-          }
+        case 'Enter': // Clicks the current element
+          virtualCursorElements[vcIndex].click();
+          return;
         default:
-          focusableElements[currentIndex].focus();
-          break;
-      }
+          return;
+      } // End switch 1
     },
-    [currentIndex, focusableElements],
-  );
+    [vcIndex, virtualCursorElements],
+  ); // End handleKeyDown
 
   const handleSelectComponent = React.useCallback(
     (fiberNav: FiberNavigator) => {
@@ -205,11 +158,23 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
     [iframeCoordinatesToWindowCoordinates, onMoveComponent],
   );
 
+  const [bodyFocused, setBodyFocused] = React.useState(false);
+  const handleFocus = (ev: FocusEvent) => {
+    const isFocusOnBody = ev.target && (ev.target as any).getAttribute('data-builder-id') === null;
+    if (isFocusOnBody && !bodyFocused) {
+      setHeaderMessage('Warning: Focus on body.');
+      setBodyFocused(true);
+    }
+    if (!isFocusOnBody && bodyFocused) {
+      setHeaderMessage('');
+      setBodyFocused(false);
+    }
+  };
+
   const debugSize = '8px';
 
   React.useEffect(() => {
-    iframeRef.current = document.getElementById(iframeId) as HTMLIFrameElement;
-    const iframe = iframeRef.current;
+    const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     if (!iframe) {
       // console.log('Canvas:effect !iframe, stop');
@@ -225,40 +190,60 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
       const iframeDocument = iframe.contentDocument;
       const iframeWindow = iframe.contentWindow;
 
-      setFocusableElements(
+      // The comments before some selectors below are intentionally there so that the matched elements are not focusable by the virtual cursor. These elements are instead narrated as the landmarks or groups narration part of a focusable element when entering the element. But let's keep them here in case it will change in the future, and so that it's clear that they are not missed out but that they are not focusable intentionally
+      setVirtualCursorElements(
         Array.from(
           iframeDocument.querySelectorAll(
             [
               'a',
               'button',
-              'checkbox',
-              'marquee',
-              'option',
-              'radio',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
               'input',
-              'textarea',
+              // 'li',
+              'marquee',
+              // 'ol',
+              // 'option',
+              // 'p',
               'select',
-              '[role="dialog"]',
+              'textarea',
+              // 'ul',
+              '[role="button"]',
+              '[role="checkbox"]',
+              // '[role="dialog"]',
               '[role="gridcell"]',
               '[role="link"]',
+              // '[role="list"]',
+              '[role="listbox"]',
+              '[role="listitem"]',
               '[role="log"]',
+              // '[role="menu"]',
+              // '[role="menubar"]',
               '[role="menuitem"]',
               '[role="menuitemcheckbox"]',
               '[role="menuitemradio"]',
+              // '[role="option"]',
               '[role="progressbar"]',
+              '[role="radio"]',
               '[role="scrollbar"]',
+              '[role="searchbox"]',
+              '[role="separator"]',
               '[role="slider"]',
               '[role="spinbutton"]',
               '[role="status"]',
+              '[role="switch"]',
               '[role="tab"]',
               '[role="tabpanel"]',
               '[role="textbox"]',
               '[role="timer"]',
               '[role="tooltip"]',
-              '[role="treeitem"]',
-              '[role="switch"]',
-              '[role="details"]',
-              '[tabindex]',
+              '[role="tree"]',
+              // '[role="treeitem"]',
+              '.ui-text:not(.ui-checkbox__label)',
             ]
               .map(selector => `*:not([aria-hidden]) >  ${selector}`)
               .join(','),
@@ -271,7 +256,6 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
       if (!style) {
         style = iframeDocument.createElement('style');
         style.id = 'builder-style';
-
         // console.log('Canvas:effect created style', style);
 
         iframeDocument.body.appendChild(style);
@@ -287,10 +271,6 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
 
       // console.log('Canvas:effect elements', elements);
 
-      if (!enabledVirtualCursor) {
-        iframeDocument.querySelector('.virtual-focused')?.classList.remove('virtual-focused');
-      }
-
       const elementStyles = !isExpanding
         ? ''
         : Array.from(elements)
@@ -300,27 +280,23 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
               // We need to measure nodes without our style overrides applied.
               // Remove our attribute used in our debug style selector.
               element.removeAttribute('data-builder-id');
-              const { width, height } = element.getBoundingClientRect();
               const { marginTop, marginRight, marginBottom, marginLeft } = iframeWindow.getComputedStyle(element);
               element.setAttribute('data-builder-id', builderId);
 
-              const hasNoWidth = width === 0;
-              const hasNoHeight = height === 0;
+              const isContainer = element.tagName === 'DIV';
               const hasNoChildren = element.childElementCount === 0;
               const hasManyChildren = element.childElementCount > 1;
-
               const properties = [
-                hasNoChildren &&
-                  hasNoWidth &&
-                  `padding-left: calc(${debugSize} * 2);\n  padding-right: calc(${debugSize} * 2);`,
-                hasNoChildren &&
-                  hasNoHeight &&
-                  `padding-top: calc(${debugSize} * 2);\n  padding-bottom: calc(${debugSize} * 2);`,
+                isContainer &&
+                  hasNoChildren &&
+                  `height: 0px;
+                  padding-left: calc(${debugSize} * 2);\n  padding-right: calc(${debugSize} * 2);
+                  padding-top: calc(${debugSize} * 2);\n  padding-bottom: calc(${debugSize} * 2);`,
                 hasManyChildren && `padding: ${debugSize};`,
-                marginTop === '0px' && `margin-top: ${debugSize};`,
-                marginRight === '0px' && `margin-right: ${debugSize};`,
-                marginBottom === '0px' && `margin-bottom: ${debugSize};`,
-                marginLeft === '0px' && `margin-left: ${debugSize};`,
+                marginTop === '0px' ? `margin-top: ${debugSize};` : `margin-top: ${marginTop};`,
+                marginRight === '0px' ? `margin-right: ${debugSize};` : `margin-right: ${marginRight};`,
+                marginBottom === '0px' ? `margin-bottom: ${debugSize};` : `margin-bottom: ${marginBottom};`,
+                marginLeft === '0px' ? `margin-left: ${debugSize};` : `margin-left: ${marginLeft};`,
               ]
                 .filter(Boolean)
                 .join('\n');
@@ -328,7 +304,7 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
               // console.log(
               //   element,
               //   '\nHAS\n',
-              //   { width, height, marginTop, marginRight, marginBottom, marginLeft },
+              //   { isContainer, hasNoChildren, marginTop, marginRight, marginBottom, marginLeft },
               //   '\nGETS\n',
               //   properties,
               // );
@@ -339,6 +315,13 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
             .join('\n');
 
       style.innerHTML = [
+        bodyFocused &&
+          inUseMode &&
+          `
+          body {
+            border: 3px solid red;
+          }
+          `,
         isSelecting &&
           `
           [data-builder-id="builder-root"] {
@@ -353,7 +336,7 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
             outline-offset: -1px;
           }
           `,
-        mode === 'use' &&
+        inUseMode &&
           `
             .virtual-focused {
               border: 2px dashed black;
@@ -374,7 +357,17 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
 
       iframe.contentWindow.clearTimeout(animationFrame);
     };
-  }, [iframeId, isExpanding, isSelecting, mode, jsonTree, role, enabledVirtualCursor]);
+  }, [iframeId, isExpanding, isSelecting, jsonTree, role, bodyFocused, inUseMode]);
+
+  React.useEffect(() => {
+    if (enabledVirtualCursor) {
+      const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+      iframe.contentWindow.focus();
+    } else {
+      virtualCursorElements.map(e => e.classList.remove('virtual-focused'));
+      setFocusedVcElement(null);
+    }
+  }, [enabledVirtualCursor, iframeId, virtualCursorElements]);
 
   return (
     <Frame
@@ -382,14 +375,13 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
       frameBorder="0"
       width="100%"
       height="100%"
-      initialContent='<!DOCTYPE html><html><head><script async src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/3.5.0/axe.min.js"></script><style>html {font-size: 14px;}</style></head><body><div class="frame-root"></div></body></html>'
+      initialContent={`<!DOCTYPE html><html><head><script async src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/${axeVersion}/axe.min.js"></script><style>html {font-size: 14px;}</style></head><body><div class="frame-root"></div></body></html>`}
       style={style}
       id={iframeId}
     >
       <FrameContextConsumer>
         {({ document, window }) => (
           <>
-            <AbilityAttributesValidator window={window} onErrorsChanged={onAccessibilityErrorsChanged} />
             {(!jsonTree.props?.children || jsonTree.props.children.length === 0) && (
               <div
                 style={{
@@ -432,43 +424,42 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
                 componentName={selectedComponent.displayName}
                 onClone={handleCloneComponent}
                 onMove={handleMoveComponent}
-                onDelete={onDeleteComponent}
+                onDelete={onDeleteSelectedComponent}
                 onGoToParent={onGoToParentComponent}
               />
             )}
-            {_.keys(accessibilityErrors).map(uuid => (
-              <ErrorFrame
-                target={document}
-                selector={`[data-builder-id="${uuid}"]`}
-                errors={_.keys(accessibilityErrors[uuid]).length}
-              />
-            ))}
             {draggingElement && (
               <DropSelector
                 filter={fiberNav => fiberNavFindOwnerInJSONTree(fiberNav, jsonTree)}
                 jsonTree={jsonTree}
                 mountDocument={document}
                 onDropPositionChange={onDropPositionChange}
+                hideSelector={hideDropSelector}
               />
             )}
-
+            <EventListener type="keydown" listener={onKeyDown} target={document} />
             <Provider theme={teamsTheme} target={document} tabIndex={0} style={{ outline: 'none' }}>
               {draggingElement && <EventListener type="mousemove" listener={handleMouseMove} target={document} />}
               {draggingElement && <EventListener type="mouseup" listener={handleMouseUp} target={document} />}
-              {mode === 'use' && (
-                <>
-                  <EventListener capture type="focus" listener={handleFocus} target={document} />
-                  <EventListener capture type="blur" listener={handleBlur} target={document} />
-                </>
+              {draggingElement && (
+                <EventListener
+                  type="scroll"
+                  listener={() => !hideDropSelector && setHideDropSelector(true)}
+                  target={document}
+                />
               )}
-              {selectedComponent && <ReaderText selector={`[data-builder-id="${selectedComponent.uuid}"]`} />}
+              {inUseMode && <EventListener capture type="focus" listener={handleFocus} target={document} />}
               {renderJSONTreeToJSXElement(jsonTree, renderJSONTreeElement)}
-              {mode === 'use' && enabledVirtualCursor && (
-                <>
-                  <EventListener type="keydown" listener={handleKeyDown} target={document} />
-                  <ReaderText node={currentFocusedNode} />
-                </>
+              {inUseMode && enabledVirtualCursor && (
+                <EventListener type="keydown" listener={handleKeyDown} target={document} />
               )}
+              <div style={{ bottom: '0', position: 'absolute' }}>
+                <ReaderNarration
+                  vcElement={focusedVcElement}
+                  selector={selectedComponent ? `[data-builder-id="${selectedComponent.uuid}"]` : null}
+                  inUseMode={inUseMode}
+                />
+              </div>
             </Provider>
           </>
         )}

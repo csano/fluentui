@@ -6,10 +6,12 @@ import { mountWithProvider } from 'test/utils';
 
 describe('Animation', () => {
   isConformant(Animation, {
+    testPath: __filename,
     constructorName: 'Animation',
     hasAccessibilityProp: false,
+    skipAsPropTests: true,
     requiredProps: { children: <div /> },
-    handlesAsProp: false,
+    testOptions: { 'consistent-callback-names': { ignoreProps: ['onEntered', 'onExited'] } },
   });
 
   test('does not throw if children is not passed', () => {

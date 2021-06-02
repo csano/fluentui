@@ -26,12 +26,13 @@ export const radioGroupItemStyles: ComponentSlotStylesPrepared<RadioGroupItemSty
     borderStyle: 'solid',
     borderWidth: `${pxToRem(1)}`,
     borderColor: 'transparent',
-    borderRadius: `${pxToRem(2)}`,
+    borderRadius: siteVariables.borderRadiusMedium,
     color: v.textColorDefault,
     cursor: 'pointer',
     display: p.vertical ? 'flex' : 'inline-flex',
     fontSize: v.textFontSize,
     padding: v.padding,
+    margin: v.margin,
 
     ':hover': {
       color: v.textColorDefaultHoverFocus,
@@ -62,24 +63,26 @@ export const radioGroupItemStyles: ComponentSlotStylesPrepared<RadioGroupItemSty
   }),
 
   indicator: ({ props: p, variables: v }): ICSSInJSStyle => ({
-    margin: `0 ${pxToRem(12)} 0 0`,
-    borderRadius: '50%',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: v.indicatorBorderColorDefault,
-    width: pxToRem(12),
-    height: pxToRem(12),
+    margin: `${pxToRem(2)} 0`,
+    outline: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: pxToRem(16),
+    height: pxToRem(16),
+    verticalAlign: 'midddle',
+    color: v.indicatorColorDefault,
 
     ...(p.checked && {
-      background: v.indicatorBackgroundColorChecked,
-      borderColor: 'transparent',
+      color: v.indicatorBackgroundColorChecked,
     }),
 
     ...(p.disabled && {
-      borderColor: v.colorDisabled,
-      ...(p.checked && {
-        background: v.colorDisabled,
-      }),
+      color: v.colorDisabled,
     }),
+  }),
+
+  label: (): ICSSInJSStyle => ({
+    margin: `0 0 0 ${pxToRem(12)}`,
   }),
 };
