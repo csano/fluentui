@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as _ from 'lodash';
 import DocumentTitle from 'react-document-title';
 import { Box, Text, Button, Header, Tooltip, Menu, tabListBehavior } from '@fluentui/react-northstar';
 import { FilesCodeIcon, AcceptIcon, AddIcon, MenuIcon } from '@fluentui/react-icons-northstar';
@@ -22,6 +23,7 @@ import { InsertComponent } from './InsertComponent';
 import { debug, useDesignerState } from '../state';
 import { useAxeOnElement, useMode } from '../hooks';
 import { ErrorPanel } from './ErrorPanel';
+import { ErrorIcon } from './ErrorFrame';
 
 const HEADER_HEIGHT = '3rem';
 
@@ -343,6 +345,25 @@ export const Designer: React.FunctionComponent = () => {
     dispatch({ type: 'CLOSE_ADD_DIALOG' });
   }, [dispatch]);
 
+  const handleAccessibilityErrors = React.useCallback(errors => {
+    setAccessibilityErrors(errors);
+    debug('handleAccessibilityErrors', errors);
+  }, []);
+
+  const [accessibilityAttributesErrors, setAccessibilityErrors] = React.useState({});
+  const accessibilityErrors = _.mapValues(accessibilityAttributesErrors, aaForComponent =>
+    _.mapValues(aaForComponent, message => ({ source: 'AA', error: message })),
+  );
+  /*
+  for (let i = 0; i < axeErrors.length; i++) {
+    const id = axeErrors[i].dataBuilderId;
+    if (!accessibilityErrors[id]) {
+      accessibilityErrors[id] = {};
+    }
+    accessibilityErrors[id][i] = { source: 'AXE', error: axeErrors[i].failureSummary };
+  }
+  */
+
   const handleAddComponent = React.useCallback(
     (component: string, module: string) => {
       dispatch({ type: 'ADD_COMPONENT', component, module });
@@ -593,6 +614,8 @@ export const Designer: React.FunctionComponent = () => {
                   role="main"
                   inUseMode={mode === 'use'}
                   setHeaderMessage={setHeaderMessage}
+                  accessibilityErrors={accessibilityErrors}
+                  onAccessibilityErrorsChanged={handleAccessibilityErrors}
                 />
               </ErrorBoundary>
             </BrowserWindow>
@@ -660,6 +683,28 @@ export const Designer: React.FunctionComponent = () => {
             }}
           >
             <Description selectedJSONTreeElement={selectedJSONTreeElement} componentInfo={selectedComponentInfo} />
+
+            {accessibilityErrors[selectedComponent.uuid] && (
+              <div
+                style={{
+                  background: '#e3404022',
+                }}
+              >
+                <h4>
+                  <ErrorIcon style={{ width: '1em', height: '1em' }} />{' '}
+                  {_.keys(accessibilityErrors[selectedComponent.uuid]).length} accessibility errors
+                </h4>
+                <ul>
+                  {_.keys(accessibilityErrors[selectedComponent.uuid]).map(errorId => (
+                    <li>
+                      <strong>{accessibilityErrors[selectedComponent.uuid][errorId].source}</strong>&nbsp;
+                      {accessibilityErrors[selectedComponent.uuid][errorId].error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* <Anatomy componentInfo={selectedComponentInfo} /> */}
             {!!axeErrors.length && <ErrorPanel axeErrors={axeErrors} />}
             {selectedJSONTreeElement && (

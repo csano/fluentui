@@ -36,7 +36,8 @@ export const AbilityAttributesValidator: React.FunctionComponent<AbilityAttribut
           const [builderId, errorId] = (element.getAttribute(ATTRIBUTE_NAME_ERROR_ID) ?? '').split(':');
           element.removeAttribute(ATTRIBUTE_NAME_ERROR_ID);
           if (builderId && errorId) {
-            setErrors(({ [builderId]: { [`${builderId}:${errorId}`]: __, ...errorsForBuilderId }, ...errors }) => ({
+            const id = `${builderId}:${errorId}`;
+            setErrors(({ [builderId]: { [id]: __, ...errorsForBuilderId }, ...errors }) => ({
               ...errors,
               ...(!_.isEmpty(errorsForBuilderId) && { [builderId]: errorsForBuilderId }),
             }));
