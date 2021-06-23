@@ -21,8 +21,8 @@ import { GetShareableLink } from './GetShareableLink';
 import { ErrorBoundary } from './ErrorBoundary';
 import { InsertComponent } from './InsertComponent';
 import { debug, useDesignerState } from '../state';
-import { useAxeOnElement, useMode } from '../hooks';
-import { ErrorPanel } from './ErrorPanel';
+import { useAxe, useMode } from '../hooks';
+// import { ErrorPanel } from './ErrorPanel';
 import { ErrorIcon } from './ErrorFrame';
 
 const HEADER_HEIGHT = '3rem';
@@ -95,13 +95,15 @@ export const Designer: React.FunctionComponent = () => {
   const [showJSONTree, handleShowJSONTreeChange] = React.useState(false);
   const [headerMessage, setHeaderMessage] = React.useState('');
 
-  const [axeErrors, runAxeOnElement] = useAxeOnElement();
+  // const [axeErrors, runAxeOnElement] = useAxeOnElement();
 
+  /*
   React.useEffect(() => {
     if (state.selectedJSONTreeElementUuid) {
       runAxeOnElement(state.selectedJSONTreeElementUuid);
     }
   }, [state.selectedJSONTreeElementUuid, runAxeOnElement]);
+  */
 
   React.useEffect(() => {
     if (state.jsonTreeOrigin === 'store') {
@@ -345,6 +347,11 @@ export const Designer: React.FunctionComponent = () => {
     dispatch({ type: 'CLOSE_ADD_DIALOG' });
   }, [dispatch]);
 
+  const [axeAllErrors, runAxe] = useAxe();
+  React.useEffect(() => {
+    runAxe();
+  }, [runAxe]);
+
   const handleAccessibilityErrors = React.useCallback(errors => {
     setAccessibilityErrors(errors);
     debug('handleAccessibilityErrors', errors);
@@ -354,6 +361,23 @@ export const Designer: React.FunctionComponent = () => {
   const accessibilityErrors = _.mapValues(accessibilityAttributesErrors, aaForComponent =>
     _.mapValues(aaForComponent, message => ({ source: 'AA', error: message })),
   );
+  console.log(`accessibilityErrors: ${JSON.stringify(accessibilityErrors)}`);
+  // const axeGen = _.mapValues(axeAllErrors, x => _.mapValues(x, message => ({ source: 'AXE', error: message })));
+
+  console.log(axeAllErrors);
+
+  for (const x in axeAllErrors) {
+    if (!accessibilityErrors[x]) {
+      accessibilityErrors[x] = {};
+    }
+    let count = 0;
+    for (const messages of axeAllErrors[x]) {
+      accessibilityErrors[x][`axe:${count++}`] = { source: 'AXE', error: messages };
+    }
+  }
+
+  console.log(`accessibilityErrors -- after: ${JSON.stringify(accessibilityErrors)}`);
+
   /*
   for (let i = 0; i < axeErrors.length; i++) {
     const id = axeErrors[i].dataBuilderId;
@@ -697,7 +721,7 @@ export const Designer: React.FunctionComponent = () => {
                 <ul>
                   {_.keys(accessibilityErrors[selectedComponent.uuid]).map(errorId => (
                     <li>
-                      <strong>{accessibilityErrors[selectedComponent.uuid][errorId].source}</strong>&nbsp;
+                      <strong>{accessibilityErrors[selectedComponent.uuid][errorId].source}</strong>:&nbsp;
                       {accessibilityErrors[selectedComponent.uuid][errorId].error}
                     </li>
                   ))}
@@ -706,7 +730,7 @@ export const Designer: React.FunctionComponent = () => {
             )}
 
             {/* <Anatomy componentInfo={selectedComponentInfo} /> */}
-            {!!axeErrors.length && <ErrorPanel axeErrors={axeErrors} />}
+            {/* !!axeErrors.length && <ErrorPanel axeErrors={axeErrors} /> */}
             {selectedJSONTreeElement && (
               <Knobs
                 onPropChange={handlePropChange}

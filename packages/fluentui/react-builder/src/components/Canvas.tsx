@@ -440,7 +440,7 @@ export const Canvas: React.FunctionComponent<CanvasProps> = ({
               <ErrorFrame
                 target={document}
                 selector={`[data-builder-id="${uuid}"]`}
-                errors={_.keys(accessibilityErrors[uuid]).length}
+                errors={_.values(accessibilityErrors[uuid]).length}
               />
             ))}
             {draggingElement && (

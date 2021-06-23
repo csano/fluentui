@@ -16,9 +16,9 @@ export const ErrorPanel = ({ axeErrors }) => {
         ),
       },
       content: (
-        <ul style={{ padding: '0rem 0.7rem', listStyleType: 'none' }}>
+        <ul style={{ padding: '0rem 0.7rem' }}>
           {axeErrors.map(error => (
-            <li>{error}</li>
+            <li key={error.dataBuilderId}>{error.failureSummary}</li>
           ))}
         </ul>
       ),
